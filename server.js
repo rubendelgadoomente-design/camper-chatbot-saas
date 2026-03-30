@@ -53,8 +53,11 @@ client.on('ready', () => {
     console.log('✅ WhatsApp listo');
 });
 
-client.on('message', async (msg) => {
-    if (msg.type !== 'chat' || msg.fromMe) return;
+client.on('message_create', async (msg) => {
+    if (msg.type !== 'chat') return;
+    
+    // Ignore internal messages except from admin commands (starting with '/')
+    if (msg.fromMe && !msg.body.startsWith('/')) return;
     
     const chat = await msg.getChat();
     if (chat.isGroup) return;
