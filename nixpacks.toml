@@ -1,5 +1,19 @@
 [phases.setup]
-nixPkgs = ["nodePackages.npm", "nodejs-20_x"]
+nixPkgs = [
+    "nodePackages.npm", 
+    "nodejs-20_x",
+    "chromium",
+    "nss",
+    "nspr",
+    "atk",
+    "at-spi2-atk",
+    "cups",
+    "libdrm",
+    "libxkbcommon",
+    "pango",
+    "cairo",
+    "mesa"
+]
 
 [phases.build]
 cmds = ["npm install"]
