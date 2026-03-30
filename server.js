@@ -56,19 +56,13 @@ client.on('ready', () => {
 client.on('message_create', async (msg) => {
     if (msg.type !== 'chat') return;
     
-    // Ignore internal messages except from admin commands (starting with '/')
-    if (msg.fromMe && !msg.body.startsWith('/')) return;
-    
-    const chat = await msg.getChat();
-    if (chat.isGroup) return;
-
-    const from = msg.from.split('@')[0];
     const body = msg.body.trim();
-
-    addLog(from, body, 'user');
+    const from = msg.from.split('@')[0];
 
     // --- COMANDOS DE ADMINISTRADOR ---
-    if (body.startsWith('/')) {
+    if (msg.fromMe && body.startsWith('/')) {
+        addLog('Admin', body, 'admin'); // El admin siempre loguea sus comandos
+        
         const command = body.split(' ')[0].toLowerCase();
         
         if (command === '/pausa') {
@@ -85,7 +79,6 @@ client.on('message_create', async (msg) => {
         if (command === '/ayuda') {
             return msg.reply('🛠️ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseña');
         }
-        // El comando /resena ya existía, lo mantenemos:
         if (command === '/resena') {
             const parts = body.split(' ');
             if (parts.length < 2) return msg.reply('Uso: /resena [numero]');
@@ -94,7 +87,16 @@ client.on('message_create', async (msg) => {
             await client.sendMessage(target, msgReview);
             return msg.reply('✅ Reseña enviada.');
         }
+        return; // Detener aquí para que no lo procese la IA
     }
+
+    // Ignorar otros mensajes internos (no comandos)
+    if (msg.fromMe) return;
+
+    const chat = await msg.getChat();
+    if (chat.isGroup) return;
+
+    addLog(from, body, 'user');
 
     // --- PROCESAMIENTO IA ---
     if (isAIActive) {
@@ -124,17 +126,25 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-app.get('/api/logs', (req, res) => {
-    res.json(logs);
-});
+app.get('/api/logs', (req, res) => res.json(logs));
+app.get('/api/is-ai-active', (req, res) => res.json({ active: isAIActive }));
 
-// Mantener la ruta original para pruebas manuales si se desea
-app.post('/api/chat', async (req, res) => {
+// --- NUEVO: ENDPOINT PARA CHAT WEB (PROBADOR AI) ---
+app.post('/api/chat', express.json(), async (req, res) => {
     const { message } = req.body;
-    const response = await processMessageAI(message);
-    res.json({ response });
+    if (!message) return res.status(400).json({ error: 'Mensaje vacío' });
+    
+    try {
+        const aiResponse = await processMessageAI(message);
+        addLog('Web Tester', message, 'user');
+        addLog('Asistente (Web)', aiResponse, 'ai');
+        res.json({ response: aiResponse });
+    } catch (error) {
+        console.error('Error en Chat Web:', error);
+        res.status(500).json({ error: 'Fallo al procesar IA' });
+    }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Dashboard en http://localhost:${PORT}`);
 });
