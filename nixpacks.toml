@@ -3,16 +3,23 @@ nixPkgs = [
     "nodePackages.npm", 
     "nodejs-20_x",
     "chromium",
+    "glib",
     "nss",
     "nspr",
     "atk",
     "at-spi2-atk",
+    "at-spi2-core",
     "cups",
+    "dbus",
     "libdrm",
     "libxkbcommon",
     "pango",
     "cairo",
-    "mesa"
+    "mesa",
+    "expat",
+    "libxcb",
+    "alsa-lib",
+    "gtk3"
 ]
 
 [phases.build]
