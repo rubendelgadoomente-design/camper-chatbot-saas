@@ -54,6 +54,9 @@ client.on('ready', () => {
 });
 
 client.on('message_create', async (msg) => {
+    // Debug Log para ver en Railway exactamente qué detecta el bot
+    console.log(`[DEBUG] Msg detectado: ${msg.from} -> ${msg.body} (Me: ${msg.fromMe})`);
+
     if (msg.type !== 'chat') return;
     
     const body = msg.body.trim();
@@ -67,17 +70,19 @@ client.on('message_create', async (msg) => {
         
         if (command === '/pausa') {
             isAIActive = false;
-            return msg.reply('⏸️ Asistente IA pausado por el administrador.');
+            return client.sendMessage(msg.from, '⏸️ Asistente IA pausado por el administrador.');
         }
         if (command === '/activa') {
             isAIActive = true;
-            return msg.reply('▶️ Asistente IA reactivado.');
+            return client.sendMessage(msg.from, '▶️ Asistente IA reactivado.');
         }
         if (command === '/status') {
-            return msg.reply(`🤖 *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÍ' : 'NO'}\n- Status: ${botStatus}\n- Uptime: ${Math.floor(process.uptime() / 60)} min`);
+            const statusReport = `🤖 *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÍ' : 'NO'}\n- Status: ${botStatus}\n- Uptime: ${Math.floor(process.uptime() / 60)} min`;
+            return client.sendMessage(msg.from, statusReport);
         }
         if (command === '/ayuda') {
-            return msg.reply('🛠️ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseña');
+            const helpMsg = '🛠️ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseña';
+            return client.sendMessage(msg.from, helpMsg);
         }
         if (command === '/resena') {
             const parts = body.split(' ');

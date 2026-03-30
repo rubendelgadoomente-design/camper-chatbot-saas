@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CamperBot - Dashboard de Monitoreo</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --success: #27ae60;
+            --warning: #f1c40f;
+            --error: #e74c3c;
+            --bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--primary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-connected { background: #e8f5e9; color: var(--success); }
+        .status-waiting { background: #fffde7; color: var(--warning); }
+        .status-disconnected { background: #ffebee; color: var(--error); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h2 { margin-top: 0; font-size: 1.2em; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+
+        #qr-container {
+            text-align: center;
+        }
+
+        #qr-image {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            margin-top: 15px;
+        }
+
+        .log-list {
+            height: 500px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85em;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #333;
+            line-height: 1.4;
+        }
+
+        .log-ai { color: #569cd6; }
+        .log-user { color: #ce9178; }
+        .log-time { color: #858585; margin-right: 10px; font-size: 0.8em; }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot-active { background: var(--success); }
+        .dot-paused { background: var(--error); }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <img src="/logo.jpg" alt="Logo" style="width: 50px; border-radius: 8px;">
+                <h1 style="margin: 0; font-size: 1.5em;">CamperBot <span style="font-weight: 300;">Monitor</span></h1>
+            </div>
+            <div id="status-container" class="status-badge status-disconnected">
+                <span id="status-text">Cargando...</span>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- PANEL IZQUIERDO: ESTADO Y QR -->
+            <div class="card">
+            <div>
+                <div class="card">
+                    <h2>Estado del Sistema</h2>
+                    <div id="ai-indicator" class="ai-status">
+                        <span class="dot dot-active"></span> IA Activa
+                    </div>
+                    
+                    <div id="qr-section" style="display: none; margin-top: 30px;">
+                        <p style="font-size: 0.9em; color: #666;">Escanea este código con WhatsApp para conectar:</p>
+                        <div id="qr-container">
+                            <img id="qr-image" src="/whatsapp-auth.png?t=0" alt="Esperando QR...">
+                        </div>
+                        <button onclick="location.reload()" style="margin-top: 15px; padding: 10px; cursor: pointer;">Recargar QR</button>
+                    </div>
+
+                    <div id="connected-section" style="display: none; margin-top: 30px; text-align: center;">
+                        <div style="font-size: 3em;">✅</div>
+                        <p>¡El bot está operando!</p>
+                        <p style="font-size: 0.8em; color: #777;">Usa <b>/pausa</b> en WhatsApp para detenerlo temporalmente.</p>
+                    </div>
+                </div>
+
+                <!-- NUEVO: TARJETA DE CHAT DE PRUEBA -->
+                <div class="card">
+                    <h2>Probador de IA</h2>
+                    <div id="testChatArea" class="mb-3 p-2 border rounded bg-white" style="height: 150px; overflow-y: auto; font-size: 0.9rem; margin-bottom: 10px; border: 1px solid #eee; padding: 10px;">
+                        <p class="text-muted" style="color: #888; font-style: italic;">Escribe algo abajo para probar las respuestas de la IA...</p>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="testMessageInput" placeholder="Escribe aquí...">
+                        <button type="button" id="sendTestBtn">Enviar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: LOGS EN TIEMPO REAL -->
+            <div class="card">
+                <h2>Actividad en Tiempo Real</h2>
+                <div id="log-window" class="log-list">
+                    <div class="log-entry">Iniciando monitor...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const statusContainer = document.getElementById('status-container');
+                const statusText = document.getElementById('status-text');
+                const qrSection = document.getElementById('qr-section');
+                const connectedSection = document.getElementById('connected-section');
+                const aiIndicator = document.getElementById('ai-indicator');
+
+                statusText.innerText = data.status;
+                statusContainer.className = 'status-badge ' + 
+                    (data.status === 'Conectado' ? 'status-connected' : 
+                     (data.status === 'Esperando QR' ? 'status-waiting' : 'status-disconnected'));
+
+                if (data.status === 'Esperando QR') {
+                    qrSection.style.display = 'block';
+                    connectedSection.style.display = 'none';
+                    document.getElementById('qr-image').src = '/whatsapp-auth.png?t=' + Date.now();
+                } else if (data.status === 'Conectado') {
+                    qrSection.style.display = 'none';
+                    connectedSection.style.display = 'block';
+                }
+
+                aiIndicator.innerHTML = data.isAIActive ? 
+                    '<span class="dot dot-active"></span> IA Respondiendo' : 
+                    '<span class="dot dot-paused"></span> IA Detenida (Modo Admin)';
+
+            } catch (error) {
+                console.error('Error actualizando estado:', error);
+            }
+        }
+
+        async function updateLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const logs = await response.json();
+                const logWindow = document.getElementById('log-window');
+                
+                logWindow.innerHTML = logs.map(log => `
+                    <div class="log-entry">
+                        <span class="log-time">[${log.timestamp}]</span>
+                        <span class="log-${log.type}"><b>${log.user}:</b> ${log.message}</span>
+                    </div>
+                `).join('') || '<div class="log-entry">Esperando actividad...</div>';
+            } catch (error) {
+                console.log('Error logs');
+            }
+        }
+
+        // Nueva funcionalidad: Chat de Prueba
+        const testInput = document.getElementById('testMessageInput');
+        const testBtn = document.getElementById('sendTestBtn');
+        const testArea = document.getElementById('testChatArea');
+
+        const sendTest = async () => {
+            const message = testInput.value.trim();
+            if(!message) return;
+
+            testArea.innerHTML += `<div class="mb-2"><strong>Tú:</strong> ${message}</div>`;
+            testInput.value = '';
+            testArea.scrollTop = testArea.scrollHeight;
+
+            testBtn.disabled = true;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                const data = await res.json();
+                testArea.innerHTML += `<div class="mb-2" style="color: #569cd6;"><strong>IA:</strong> ${data.response}</div>`;
+            } catch (e) {
+                testArea.innerHTML += `<div style="color: red; font-size: 0.8em;">Error de conexión</div>`;
+            } finally {
+                testBtn.disabled = false;
+                testArea.scrollTop = testArea.scrollHeight;
+            }
+        };
+
+        testBtn.onclick = sendTest;
+        testInput.onkeypress = (e) => { if(e.key === 'Enter') sendTest(); };
+
+        // Intervalos de actualización
+        setInterval(updateStatus, 3000);
+        setInterval(updateLogs, 2000);
+        updateStatus();
+        updateLogs();
+    </script>
+</body>
+</html>
