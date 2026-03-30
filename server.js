@@ -123,6 +123,11 @@ client.initialize();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- RUTAS DE NAVEGACIÓN ---
+app.get('/monitor', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'monitor.html'));
+});
+
 app.get('/api/status', (req, res) => {
     res.json({ 
         status: botStatus, 
