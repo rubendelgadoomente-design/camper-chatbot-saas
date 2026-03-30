@@ -19,7 +19,18 @@ nixPkgs = [
     "expat",
     "libxcb",
     "alsa-lib",
-    "gtk3"
+    "gtk3",
+    "xorg.libX11",
+    "xorg.libXcomposite",
+    "xorg.libXdamage",
+    "xorg.libXext",
+    "xorg.libXfixes",
+    "xorg.libXrandr",
+    "xorg.libxcb",
+    "xorg.libXrender",
+    "libgbm",
+    "fontconfig",
+    "freetype"
 ]
 
 [phases.build]
