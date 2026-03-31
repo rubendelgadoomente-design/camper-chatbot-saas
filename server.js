@@ -60,11 +60,15 @@ client.on('message_create', async (msg) => {
     if (msg.type !== 'chat') return;
     
     const body = msg.body.trim();
-    const from = msg.from.split('@')[0];
+    const from = msg.from; // ID completo del chat
+    
+    // Lista de administradores permitidos (tu número personal)
+    const adminNumbers = ['34616063682@c.us'];
+    const isAdmin = msg.fromMe || adminNumbers.includes(from);
 
     // --- COMANDOS DE ADMINISTRADOR ---
-    if (msg.fromMe && body.startsWith('/')) {
-        addLog('Admin', body, 'admin'); // El admin siempre loguea sus comandos
+    if (isAdmin && body.startsWith('/')) {
+        addLog('Admin', body, 'admin');
         
         const command = body.split(' ')[0].toLowerCase();
         
