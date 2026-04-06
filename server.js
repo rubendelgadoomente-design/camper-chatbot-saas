@@ -19,6 +19,19 @@ let lastQR = null;
 const userContext = {}; 
 const MAX_HISTORY = 10;
 
+/**
+ * Función para enviar mensajes programados (Bienvenida / Reseña)
+ */
+const sendProactiveMessage = async (phone, message) => {
+    const target = phone.includes('@c.us') ? phone : `${phone}@c.us`;
+    try {
+        await client.sendMessage(target, message);
+        addLog('SISTEMA', `Mensaje proactivo enviado a ${phone}`, 'ai');
+    } catch (e) {
+        console.error(`Error enviando mensaje proactivo a ${phone}:`, e);
+    }
+};
+
 const addLog = (user, message, type = 'user') => {
     const timestamp = new Date().toLocaleTimeString();
     logs.unshift({ timestamp, user, message, type });
@@ -152,6 +165,29 @@ client.on('message_create', async (msg) => {
 
     addLog(from, body, 'user');
 
+    // --- LÓGICA DE ACTIVACIÓN POR QR ---
+    if (body.toUpperCase().includes('ACTIVAR MI VIAJE')) {
+        const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
+        try {
+            let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+            const phoneStr = from.split('@')[0];
+            const rental = rentals.find(r => r.phone === phoneStr && r.status === 'active');
+
+            if (rental) {
+                rental.activated = true;
+                rental.welcome_sent = true;
+                fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+
+                const welcomeMsg = `¡Hola ${rental.name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
+                return client.sendMessage(from, welcomeMsg);
+            } else {
+                return client.sendMessage(from, "¡Hola! 🚐 Para activar tu asistencia, asegúrate de que la empresa de alquiler ha registrado tu número correctamente.");
+            }
+        } catch (e) {
+            console.error("Error en activación:", e);
+        }
+    }
+
     // --- PROCESAMIENTO IA ---
     if (isAIActive) {
         try {
@@ -166,6 +202,17 @@ client.on('message_create', async (msg) => {
             
             // Actualizar estadísticas
             updateStats(category);
+
+            // Marcar "problemas" en el alquiler si la duda es técnica
+            const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
+            try {
+                let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+                const currentRental = rentals.find(r => r.phone === from.split('@')[0] && r.status === 'active');
+                if (currentRental && category !== 'otros' && category !== 'normativa') {
+                    currentRental.has_problems = true; // El usuario tuvo una duda técnica real
+                    fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+                }
+            } catch (e) {}
             
             // Actualizar historial (Usuario -> Asistente)
             userContext[from].push({ role: 'user', content: body });
@@ -204,6 +251,69 @@ app.get('/api/status', (req, res) => {
         hasQR: !!lastQR 
     });
 });
+
+app.post('/api/rentals', express.json(), async (req, res) => {
+    const { name, phone, endDate, reviewLink } = req.body;
+    if (!name || !phone || !endDate) return res.status(400).json({ error: 'Datos incompletos' });
+
+    const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
+    try {
+        const rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+        
+        const newRental = {
+            id: Date.now(),
+            name,
+            phone,
+            endDate,
+            reviewLink: reviewLink || '',
+            status: 'active',
+            has_problems: false,
+            welcome_sent: false,
+            activated: false,
+            review_sent: false
+        };
+
+        rentals.push(newRental);
+        fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+
+        res.json({ success: true, message: 'Alquiler registrado. Pendiente de activación por QR.' });
+    } catch (e) {
+        console.error('Error en registro de alquiler:', e);
+        res.status(500).json({ error: 'Fallo al guardar alquiler' });
+    }
+});
+
+/**
+ * Tarea de fondo: Comprobar finales de alquiler (Review Request)
+ * Se ejecuta cada hora (3600000ms)
+ */
+setInterval(async () => {
+    console.log('[SISTEMA] Comprobando finales de alquiler (solo activados)...');
+    const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+        let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+        // Solo enviamos reseña si el viaje está ACTIVADO (el cliente nos habló primero)
+        const activeRentals = rentals.filter(r => r.status === 'active' && r.endDate === today && r.activated && !r.review_sent);
+
+        for (const rental of activeRentals) {
+            if (!rental.has_problems) {
+                const reviewMsg = `¡Hola ${rental.name}! Hope you had an amazing trip. 🚐 Si te ha gustado nuestro servicio, ¿podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda mucho: ${rental.reviewLink}`;
+                await sendProactiveMessage(rental.phone, reviewMsg);
+                rental.review_sent = true;
+                rental.status = 'completed';
+            } else {
+                console.log(`[SISTEMA] Saltando reseña para ${rental.phone} por problemas técnicos detectados.`);
+                rental.status = 'completed_no_review';
+            }
+        }
+
+        fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+    } catch (e) {
+        console.error('Error en tarea programada:', e);
+    }
+}, 3600000); 
 
 app.get('/api/logs', (req, res) => res.json(logs));
 app.get('/api/is-ai-active', (req, res) => res.json({ active: isAIActive }));

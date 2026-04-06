@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CamperBot | Registro de Alquiler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #3b82f6;
+            --accent: #2dd4bf;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid #334155;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--subtext);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(to right, var(--primary), #2563eb);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .footer-note {
+            margin-top: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--subtext);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .success-message {
+            display: none;
+            background-color: #064e3b;
+            color: #34d399;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Registro de Check-in</h1>
+            <p style="color: var(--subtext); margin-top: 0.5rem;">Activa el asistente para el nuevo cliente</p>
+        </div>
+
+        <div id="success" class="success-message">🎉 ¡Registro completado! <br> El cliente debe escanear el QR para activar el asistente.</div>
+
+        <div class="card">
+            <form id="checkinForm">
+                <div class="form-group">
+                    <label for="renterName">Nombre del Cliente</label>
+                    <input type="text" id="renterName" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Teléfono (con código de país)</label>
+                    <input type="tel" id="phone" placeholder="Ej: 34600000000" required>
+                </div>
+                <div class="form-group">
+                    <label for="endDate">Fecha de Fin (Check-out)</label>
+                    <input type="date" id="endDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="reviewLink">Google Review Link (Opcional)</label>
+                    <input type="url" id="reviewLink" placeholder="https://g.page/r/..." value="https://search.google.com/local/writereview?placeid=TU_ID_AQUI">
+                </div>
+                <button type="submit" class="btn" id="submitBtn">REGISTRAR ALQUILER</button>
+            </form>
+        </div>
+
+        <div class="footer-note">
+            🛡️ <b>Check-in Seguro</b>: El bot NO escribirá al cliente hasta que éste escanee el QR.<br>
+            Pide al cliente que escanee el QR ahora para activar su soporte 24h.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('checkinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = 'PROCESANDO...';
+            btn.disabled = true;
+
+            const data = {
+                name: document.getElementById('renterName').value,
+                phone: document.getElementById('phone').value,
+                endDate: document.getElementById('endDate').value,
+                reviewLink: document.getElementById('reviewLink').value
+            };
+
+            try {
+                const response = await fetch('/api/rentals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    document.getElementById('success').style.display = 'block';
+                    document.getElementById('checkinForm').reset();
+                    setTimeout(() => {
+                        document.getElementById('success').style.display = 'none';
+                    }, 5000);
+                } else {
+                    alert('Error al registrar el alquiler.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Fallo de conexión.');
+            } finally {
+                btn.innerText = 'REGISTRAR ALQUILER';
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
