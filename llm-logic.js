@@ -48,6 +48,10 @@ CONOCIMIENTO TÉCNICO:
   - [VIDEO: Gestión del Poti](https://www.youtube.com/watch?v=8p_hI6_9b2Q)
   - [VIDEO: Llenado/Vaciado Aguas](https://www.youtube.com/watch?v=6YhS1W_mXzM)
 - Emergencias: Si riesgo de incendio/gas/grave, urge llamar al 112.
+
+NUEVA REGLA DE SALIDA:
+Al final de tu respuesta, añade SIEMPRE una sola palabra entre corchetes indicando la categoría del problema: [ELECTRICIDAD], [AGUA], [GAS], [WC], [NEVERA], [CALEFACCION], [NORMATIVA] u [OTROS].
+Ejemplo: "... [WC]"
 `;
 
 /**
@@ -57,7 +61,10 @@ CONOCIMIENTO TÉCNICO:
  */
 async function processMessageAI(userMessage, history = []) {
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "TU_CLAVE_AQUI") {
-        return "⚠️ Configurador: Falta la clave de OpenAI (OPENAI_API_KEY). Por favor, contacta con soporte.";
+        return { 
+            response: "⚠️ Configurador: Falta la clave de OpenAI (OPENAI_API_KEY). Por favor, contacta con soporte.",
+            category: "OTROS"
+        };
     }
 
     try {
@@ -75,20 +82,26 @@ async function processMessageAI(userMessage, history = []) {
             max_tokens: 800
         });
 
-        const reply = completion.choices[0].message.content;
+        let reply = completion.choices[0].message.content;
         
         if (!reply) throw new Error("Respuesta vacía de OpenAI");
 
-        return reply;
+        // Extraer categoría de los corchetes [CATEGORIA]
+        const categoryMatch = reply.match(/\[([A-Z]+)\]/);
+        const category = categoryMatch ? categoryMatch[1].toLowerCase() : "otros";
+        
+        // Limpiar la respuesta para el usuario (quitar la etiqueta)
+        reply = reply.replace(/\[[A-Z]+\]/, "").trim();
+
+        return { response: reply, category: category };
 
     } catch (error) {
         console.error("Error en OpenAI Logic:", error.message);
         
-        // Manejo de errores amigable según el tipo de fallo
-        if (error.status === 401) return "❌ Error de autenticación. La clave de IA es incorrecta.";
-        if (error.status === 429) return "⏳ Estamos recibiendo muchas consultas. Por favor, reintenta en un momento.";
-        
-        return "Lo siento, ha habido un problema técnico con mi 'cerebro' de IA. ¿Puedo ayudarte con lo básico (agua, luz, gas) mediante el manual impreso mientras me recupero?";
+        return { 
+            response: "Lo siento, ha habido un problema técnico con mi 'cerebro' de IA. ¿Puedo ayudarte con lo básico (agua, luz, gas) mediante el manual impreso mientras me recupero?",
+            category: "OTROS"
+        };
     }
 }
 

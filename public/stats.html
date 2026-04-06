@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CamperBot | Dashboard de Soporte</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #3b82f6;
+            --accent: #2dd4bf;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin: 0;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background-color: var(--card);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-label {
+            font-size: 0.8rem;
+            color: var(--subtext);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+        }
+
+        .card-footer {
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-box {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 1px solid #334155;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .bar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .bar-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .bar-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .bar-bg {
+            height: 10px;
+            background-color: #334155;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background-color: var(--primary);
+            transition: width 1s ease-out;
+        }
+
+        .status-badge {
+            background-color: #064e3b;
+            color: #34d399;
+            padding: 0.4rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>CamperBot Stats</h1>
+                <p style="color: var(--subtext); margin: 0.2rem 0;">Métricas de rendimiento e impacto</p>
+            </div>
+            <div class="status-badge">● Sistema Activo</div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="card">
+                <div class="card-label">Consultas Resueltas</div>
+                <div class="card-value" id="total-queries">0</div>
+                <div class="card-footer">Sin intervención humana</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Soporte Ahorrado</div>
+                <div class="card-value" id="hours-saved">0h</div>
+                <div class="card-footer">Basado en 5 min/consulta</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Disponibilidad</div>
+                <div class="card-value">24/7</div>
+                <div class="card-footer">Respuesta inmediata</div>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div class="chart-box">
+                <div class="chart-title">Dudas por Categoría</div>
+                <div class="bar-container" id="category-bars">
+                    <!-- Bars injected by JS -->
+                </div>
+            </div>
+            <div class="card" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
+                <h3 style="margin-top: 0;">Valor del Piloto</h3>
+                <p style="color: var(--subtext); font-size: 0.95rem; line-height: 1.6;">
+                    Este bot está filtrando consultas técnicas repetitivas, permitiendo que tu equipo se centre en la gestión estratégica del alquiler.
+                </p>
+                <div style="margin-top: 1rem;">
+                    <button class="btn" onclick="window.print()">Exportar Reporte</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+
+                document.getElementById('total-queries').innerText = data.total_queries;
+                
+                // Calcular horas ahorradas (5 min por consulta)
+                const hours = (data.total_queries * 5 / 60).toFixed(1);
+                document.getElementById('hours-saved').innerText = hours + 'h';
+
+                const container = document.getElementById('category-bars');
+                container.innerHTML = '';
+
+                // Ordenar categorías por cantidad
+                const categories = Object.entries(data.categories)
+                    .sort((a, b) => b[1] - a[1]);
+
+                categories.forEach(([name, count]) => {
+                    const percentage = data.total_queries > 0 ? (count / data.total_queries * 100) : 0;
+                    
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-info">
+                            <span style="text-transform: capitalize;">${name}</span>
+                            <span>${count}</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        loadStats();
+        // Recargar cada 30 segundos
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>

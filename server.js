@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const path = require('path');
+const fs = require('fs');
 const qrcodeFile = require('qrcode');
 const { processMessageAI } = require('./llm-logic');
 
@@ -23,6 +24,28 @@ const addLog = (user, message, type = 'user') => {
     logs.unshift({ timestamp, user, message, type });
     if (logs.length > 50) logs.pop(); // Mantener solo los últimos 50
     console.log(`[${timestamp}] ${type.toUpperCase()}: ${user} -> ${message}`);
+};
+
+/**
+ * Función centralizada para actualizar las estadísticas en data/camper_stats.json
+ */
+const updateStats = (category) => {
+    const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
+    try {
+        const data = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+        data.total_queries += 1;
+        
+        const cat = category.toLowerCase();
+        if (data.categories.hasOwnProperty(cat)) {
+            data.categories[cat] += 1;
+        } else {
+            data.categories['otros'] += 1;
+        }
+        
+        fs.writeFileSync(statsPath, JSON.stringify(data, null, 2));
+    } catch (e) {
+        console.error('Error actualizando estadísticas:', e);
+    }
 };
 
 // --- INICIALIZACIÓN DE WHATSAPP ---
@@ -84,6 +107,24 @@ client.on('message_create', async (msg) => {
             isAIActive = true;
             return client.sendMessage(msg.from, '▶️ Asistente IA reactivado.');
         }
+        if (command === '/resumen') {
+            const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
+            try {
+                const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+                let report = `📊 *RESUMEN DE SOPORTE MENSUAL*\n\n`;
+                report += `✅ Consultas resueltas: ${stats.total_queries}\n`;
+                report += `--------------------------\n`;
+                Object.entries(stats.categories).forEach(([name, count]) => {
+                    if (count > 0) {
+                        const icon = name === 'wc' ? '🚽' : name === 'agua' ? '💧' : name === 'electricidad' ? '⚡' : '🔧';
+                        report += `${icon} ${name.toUpperCase()}: ${count}\n`;
+                    }
+                });
+                return client.sendMessage(msg.from, report);
+            } catch (e) {
+                return client.sendMessage(msg.from, '❌ Error al generar el resumen.');
+            }
+        }
         if (command === '/status') {
             const statusReport = `🤖 *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÍ' : 'NO'}\n- Status: ${botStatus}\n- Uptime: ${Math.floor(process.uptime() / 60)} min`;
             return client.sendMessage(msg.from, statusReport);
@@ -119,7 +160,12 @@ client.on('message_create', async (msg) => {
             
             const history = userContext[from];
             
-            const aiResponse = await processMessageAI(body, history);
+            const aiData = await processMessageAI(body, history);
+            const aiResponse = aiData.response;
+            const category = aiData.category;
+            
+            // Actualizar estadísticas
+            updateStats(category);
             
             // Actualizar historial (Usuario -> Asistente)
             userContext[from].push({ role: 'user', content: body });
@@ -187,6 +233,16 @@ app.post('/api/chat', express.json(), async (req, res) => {
     } catch (error) {
         console.error('Error en Chat Web:', error);
         res.status(500).json({ error: 'Fallo al procesar IA' });
+    }
+});
+
+app.get('/api/stats', (req, res) => {
+    const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
+    try {
+        const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: 'Fallo al leer estadísticas' });
     }
 });
 
