@@ -14,6 +14,10 @@ let botStatus = 'Desconectado'; // 'Desconectado', 'Esperando QR', 'Conectado'
 let isAIActive = true;
 let lastQR = null;
 
+// Memoria de conversación por usuario (ID -> [mensajes])
+const userContext = {}; 
+const MAX_HISTORY = 10;
+
 const addLog = (user, message, type = 'user') => {
     const timestamp = new Date().toLocaleTimeString();
     logs.unshift({ timestamp, user, message, type });
@@ -110,7 +114,22 @@ client.on('message_create', async (msg) => {
     // --- PROCESAMIENTO IA ---
     if (isAIActive) {
         try {
-            const aiResponse = await processMessageAI(body);
+            // Obtener o inicializar historial del usuario
+            if (!userContext[from]) userContext[from] = [];
+            
+            const history = userContext[from];
+            
+            const aiResponse = await processMessageAI(body, history);
+            
+            // Actualizar historial (Usuario -> Asistente)
+            userContext[from].push({ role: 'user', content: body });
+            userContext[from].push({ role: 'assistant', content: aiResponse });
+            
+            // Mantener solo los últimos N mensajes para no saturar
+            if (userContext[from].length > MAX_HISTORY) {
+                userContext[from] = userContext[from].slice(-MAX_HISTORY);
+            }
+
             await msg.reply(aiResponse);
             addLog('Asistente', aiResponse, 'ai');
         } catch (error) {
@@ -149,7 +168,19 @@ app.post('/api/chat', express.json(), async (req, res) => {
     if (!message) return res.status(400).json({ error: 'Mensaje vacío' });
     
     try {
-        const aiResponse = await processMessageAI(message);
+        // Para el Web Tester usamos un ID genérico 'web-tester'
+        if (!userContext['web-tester']) userContext['web-tester'] = [];
+        const history = userContext['web-tester'];
+
+        const aiResponse = await processMessageAI(message, history);
+        
+        userContext['web-tester'].push({ role: 'user', content: message });
+        userContext['web-tester'].push({ role: 'assistant', content: aiResponse });
+        
+        if (userContext['web-tester'].length > MAX_HISTORY) {
+            userContext['web-tester'] = userContext['web-tester'].slice(-MAX_HISTORY);
+        }
+
         addLog('Web Tester', message, 'user');
         addLog('Asistente (Web)', aiResponse, 'ai');
         res.json({ response: aiResponse });

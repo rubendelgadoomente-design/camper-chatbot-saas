@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { processMessageAI } = require('./llm-logic');
 
 const tests = [
