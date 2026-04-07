@@ -2,6 +2,7 @@ services:
   - type: web
     name: camper-chatbot-saas
     runtime: docker
+    port: 3001
     plan: free # Puedes cambiar a 'starter' para disco persistente
     envVars:
       - key: PORT
@@ -11,5 +12,5 @@ services:
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: "true"
       - key: PUPPETEER_EXECUTABLE_PATH
-        value: /usr/bin/google-chrome-stable
+        value: /usr/bin/google-chrome
     healthCheckPath: /api/status
