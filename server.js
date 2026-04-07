@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const qrcodeFile = require('qrcode');
 const { processMessageAI } = require('./llm-logic');
+const db = require('./database'); // Importar el módulo de base de datos
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,28 +38,6 @@ const addLog = (user, message, type = 'user') => {
     logs.unshift({ timestamp, user, message, type });
     if (logs.length > 50) logs.pop(); // Mantener solo los últimos 50
     console.log(`[${timestamp}] ${type.toUpperCase()}: ${user} -> ${message}`);
-};
-
-/**
- * Función centralizada para actualizar las estadísticas en data/camper_stats.json
- */
-const updateStats = (category) => {
-    const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
-    try {
-        const data = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
-        data.total_queries += 1;
-        
-        const cat = category.toLowerCase();
-        if (data.categories.hasOwnProperty(cat)) {
-            data.categories[cat] += 1;
-        } else {
-            data.categories['otros'] += 1;
-        }
-        
-        fs.writeFileSync(statsPath, JSON.stringify(data, null, 2));
-    } catch (e) {
-        console.error('Error actualizando estadísticas:', e);
-    }
 };
 
 // --- INICIALIZACIÓN DE WHATSAPP ---
@@ -121,9 +100,8 @@ client.on('message_create', async (msg) => {
             return client.sendMessage(msg.from, '▶️ Asistente IA reactivado.');
         }
         if (command === '/resumen') {
-            const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
             try {
-                const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+                const stats = await db.getStats();
                 let report = `📊 *RESUMEN DE SOPORTE MENSUAL*\n\n`;
                 report += `✅ Consultas resueltas: ${stats.total_queries}\n`;
                 report += `--------------------------\n`;
@@ -167,16 +145,16 @@ client.on('message_create', async (msg) => {
 
     // --- LÓGICA DE ACTIVACIÓN POR QR ---
     if (body.toUpperCase().includes('ACTIVAR MI VIAJE')) {
-        const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
         try {
-            let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+            const rentals = await db.getRentals();
             const phoneStr = from.split('@')[0];
             const rental = rentals.find(r => r.phone === phoneStr && r.status === 'active');
 
             if (rental) {
-                rental.activated = true;
-                rental.welcome_sent = true;
-                fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+                await db.updateRental(rental.id, { 
+                    activated: true,
+                    welcome_sent: true
+                });
 
                 const welcomeMsg = `¡Hola ${rental.name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
                 return client.sendMessage(from, welcomeMsg);
@@ -201,16 +179,14 @@ client.on('message_create', async (msg) => {
             const category = aiData.category;
             
             // Actualizar estadísticas
-            updateStats(category);
+            db.incrementStat(category);
 
             // Marcar "problemas" en el alquiler si la duda es técnica
-            const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
             try {
-                let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+                const rentals = await db.getRentals();
                 const currentRental = rentals.find(r => r.phone === from.split('@')[0] && r.status === 'active');
                 if (currentRental && category !== 'otros' && category !== 'normativa') {
-                    currentRental.has_problems = true; // El usuario tuvo una duda técnica real
-                    fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
+                    await db.updateRental(currentRental.id, { has_problems: true });
                 }
             } catch (e) {}
             
@@ -256,12 +232,8 @@ app.post('/api/rentals', express.json(), async (req, res) => {
     const { name, phone, endDate, reviewLink } = req.body;
     if (!name || !phone || !endDate) return res.status(400).json({ error: 'Datos incompletos' });
 
-    const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
     try {
-        const rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
-        
         const newRental = {
-            id: Date.now(),
             name,
             phone,
             endDate,
@@ -273,9 +245,7 @@ app.post('/api/rentals', express.json(), async (req, res) => {
             review_sent: false
         };
 
-        rentals.push(newRental);
-        fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
-
+        await db.saveRental(newRental);
         res.json({ success: true, message: 'Alquiler registrado. Pendiente de activación por QR.' });
     } catch (e) {
         console.error('Error en registro de alquiler:', e);
@@ -289,11 +259,10 @@ app.post('/api/rentals', express.json(), async (req, res) => {
  */
 setInterval(async () => {
     console.log('[SISTEMA] Comprobando finales de alquiler (solo activados)...');
-    const rentalsPath = path.join(__dirname, 'data', 'rentals.json');
     const today = new Date().toISOString().split('T')[0];
 
     try {
-        let rentals = JSON.parse(fs.readFileSync(rentalsPath, 'utf8'));
+        const rentals = await db.getRentals();
         // Solo enviamos reseña si el viaje está ACTIVADO (el cliente nos habló primero)
         const activeRentals = rentals.filter(r => r.status === 'active' && r.endDate === today && r.activated && !r.review_sent);
 
@@ -301,15 +270,15 @@ setInterval(async () => {
             if (!rental.has_problems) {
                 const reviewMsg = `¡Hola ${rental.name}! Hope you had an amazing trip. 🚐 Si te ha gustado nuestro servicio, ¿podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda mucho: ${rental.reviewLink}`;
                 await sendProactiveMessage(rental.phone, reviewMsg);
-                rental.review_sent = true;
-                rental.status = 'completed';
+                await db.updateRental(rental.id, {
+                    review_sent: true,
+                    status: 'completed'
+                });
             } else {
                 console.log(`[SISTEMA] Saltando reseña para ${rental.phone} por problemas técnicos detectados.`);
-                rental.status = 'completed_no_review';
+                await db.updateRental(rental.id, { status: 'completed_no_review' });
             }
         }
-
-        fs.writeFileSync(rentalsPath, JSON.stringify(rentals, null, 2));
     } catch (e) {
         console.error('Error en tarea programada:', e);
     }
@@ -346,10 +315,9 @@ app.post('/api/chat', express.json(), async (req, res) => {
     }
 });
 
-app.get('/api/stats', (req, res) => {
-    const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
+app.get('/api/stats', async (req, res) => {
     try {
-        const stats = JSON.parse(fs.readFileSync(statsPath, 'utf8'));
+        const stats = await db.getStats();
         res.json(stats);
     } catch (e) {
         res.status(500).json({ error: 'Fallo al leer estadísticas' });
