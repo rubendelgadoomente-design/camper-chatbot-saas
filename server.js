@@ -328,18 +328,18 @@ app.post('/api/chat', express.json(), async (req, res) => {
         if (!userContext['web-tester']) userContext['web-tester'] = [];
         const history = userContext['web-tester'];
 
-        const aiResponse = await processMessageAI(message, history);
+        const aiData = await processMessageAI(message, history);
         
         userContext['web-tester'].push({ role: 'user', content: message });
-        userContext['web-tester'].push({ role: 'assistant', content: aiResponse });
+        userContext['web-tester'].push({ role: 'assistant', content: aiData.response });
         
         if (userContext['web-tester'].length > MAX_HISTORY) {
             userContext['web-tester'] = userContext['web-tester'].slice(-MAX_HISTORY);
         }
 
         addLog('Web Tester', message, 'user');
-        addLog('Asistente (Web)', aiResponse, 'ai');
-        res.json({ response: aiResponse });
+        addLog('Asistente (Web)', aiData.response, 'ai');
+        res.json({ response: aiData.response });
     } catch (error) {
         console.error('Error en Chat Web:', error);
         res.status(500).json({ error: 'Fallo al procesar IA' });
