@@ -229,15 +229,38 @@ app.get('/api/status', (req, res) => {
 });
 
 app.post('/api/rentals', express.json(), async (req, res) => {
-    const { client_name, phone, end_date, review_link } = req.body;
-    if (!client_name || !phone || !end_date) return res.status(400).json({ error: 'Datos incompletos' });
+    // Normalizamos las claves (aceptamos tanto snake_case como camelCase)
+    const name = req.body.client_name || req.body.name;
+    let phone = req.body.phone;
+    const endDate = req.body.end_date || req.body.endDate;
+    const reviewLink = req.body.review_link || req.body.reviewLink;
+
+    if (!name || !phone || !endDate) {
+        return res.status(400).json({ error: 'Datos incompletos. Se requiere nombre, teléfono y fecha.' });
+    }
+
+    // --- LIMPIEZA DE DATOS (BLINDAJE) ---
+    // 1. Limpiamos el teléfono (solo números)
+    phone = phone.replace(/\D/g, ''); 
+
+    // 2. Aseguramos formato de fecha YYYY-MM-DD
+    let finalDate = endDate;
+    if (endDate.includes('/')) {
+        const parts = endDate.split('/');
+        if (parts[0].length === 2) { // DD/MM/YYYY
+            finalDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+    }
 
     try {
         const newRental = {
-            client_name,
-            phone,
-            end_date,
-            review_link: review_link || '',
+            client_name: name,
+            name: name, // Duplicado por seguridad
+            phone: phone,
+            end_date: finalDate,
+            endDate: finalDate, // Duplicado por seguridad
+            review_link: reviewLink || '',
+            reviewLink: reviewLink || '', // Duplicado por seguridad
             status: 'active',
             has_problems: false,
             welcome_sent: false,
@@ -246,12 +269,10 @@ app.post('/api/rentals', express.json(), async (req, res) => {
         };
 
         await db.saveRental(newRental);
-        res.json({ success: true, message: 'Alquiler registrado. Pendiente de activación por QR.' });
+        res.json({ success: true, message: 'Alquiler registrado correctamente.' });
     } catch (e) {
         console.error('❌ ERROR TÉCNICO EN REGISTRO:', e);
-        if (e.message) console.error('Mensaje:', e.message);
-        if (e.code) console.error('Código:', e.code);
-        res.status(500).json({ error: 'Fallo al guardar alquiler', details: e.message || 'Error desconocido' });
+        res.status(500).json({ error: 'Fallo al guardar alquiler', details: e.message });
     }
 });
 
