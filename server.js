@@ -248,8 +248,10 @@ app.post('/api/rentals', express.json(), async (req, res) => {
         await db.saveRental(newRental);
         res.json({ success: true, message: 'Alquiler registrado. Pendiente de activación por QR.' });
     } catch (e) {
-        console.error('Error en registro de alquiler:', e);
-        res.status(500).json({ error: 'Fallo al guardar alquiler' });
+        console.error('❌ ERROR TÉCNICO EN REGISTRO:', e);
+        if (e.message) console.error('Mensaje:', e.message);
+        if (e.code) console.error('Código:', e.code);
+        res.status(500).json({ error: 'Fallo al guardar alquiler', details: e.message || 'Error desconocido' });
     }
 });
 
