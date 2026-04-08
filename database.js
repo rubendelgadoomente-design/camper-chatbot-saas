@@ -61,8 +61,6 @@ async function getStats() {
  */
 async function incrementStat(category) {
     if (supabase) {
-        // Lógica de incremento en Supabase (usando RPC o update directo)
-        // Por simplicidad para el MVP, haremos un update del objeto
         const current = await getStats();
         current.total_queries += 1;
         const cat = category.toLowerCase();
@@ -74,7 +72,7 @@ async function incrementStat(category) {
         
         const { error } = await supabase
             .from('stats')
-            .upsert({ id: 1, ...current }); // Asumimos ID 1 para la fila de stats
+            .upsert({ id: 1, ...current });
         if (error) console.error('Error en Supabase stats:', error);
     } else {
         const statsPath = path.join(__dirname, 'data', 'camper_stats.json');
@@ -132,10 +130,30 @@ async function updateRental(id, updates) {
     }
 }
 
+/**
+ * Busca un alquiler activo por número de teléfono
+ */
+async function getRentalByPhone(phone) {
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('rentals')
+            .select('*')
+            .eq('phone', phone)
+            .eq('status', 'active')
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    } else {
+        const rentals = await getRentals();
+        return rentals.find(r => r.phone === phone && r.status === 'active');
+    }
+}
+
 module.exports = {
     saveRental,
     getStats,
     incrementStat,
     getRentals,
-    updateRental
+    updateRental,
+    getRentalByPhone
 };

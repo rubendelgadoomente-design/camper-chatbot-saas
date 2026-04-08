@@ -156,7 +156,7 @@ client.on('message_create', async (msg) => {
                     welcome_sent: true
                 });
 
-                const welcomeMsg = `¡Hola ${rental.name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
+                const welcomeMsg = `¡Hola ${rental.client_name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
                 return client.sendMessage(from, welcomeMsg);
             } else {
                 return client.sendMessage(from, "¡Hola! 🚐 Para activar tu asistencia, asegúrate de que la empresa de alquiler ha registrado tu número correctamente.");
@@ -229,15 +229,15 @@ app.get('/api/status', (req, res) => {
 });
 
 app.post('/api/rentals', express.json(), async (req, res) => {
-    const { name, phone, endDate, reviewLink } = req.body;
-    if (!name || !phone || !endDate) return res.status(400).json({ error: 'Datos incompletos' });
+    const { client_name, phone, end_date, review_link } = req.body;
+    if (!client_name || !phone || !end_date) return res.status(400).json({ error: 'Datos incompletos' });
 
     try {
         const newRental = {
-            name,
+            client_name,
             phone,
-            endDate,
-            reviewLink: reviewLink || '',
+            end_date,
+            review_link: review_link || '',
             status: 'active',
             has_problems: false,
             welcome_sent: false,
@@ -264,11 +264,11 @@ setInterval(async () => {
     try {
         const rentals = await db.getRentals();
         // Solo enviamos reseña si el viaje está ACTIVADO (el cliente nos habló primero)
-        const activeRentals = rentals.filter(r => r.status === 'active' && r.endDate === today && r.activated && !r.review_sent);
+        const activeRentals = rentals.filter(r => r.status === 'active' && r.end_date === today && r.activated && !r.review_sent);
 
         for (const rental of activeRentals) {
             if (!rental.has_problems) {
-                const reviewMsg = `¡Hola ${rental.name}! Hope you had an amazing trip. 🚐 Si te ha gustado nuestro servicio, ¿podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda mucho: ${rental.reviewLink}`;
+                const reviewMsg = `¡Hola ${rental.client_name}! Hope you had an amazing trip. 🚐 Si te ha gustado nuestro servicio, ¿podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda mucho: ${rental.review_link}`;
                 await sendProactiveMessage(rental.phone, reviewMsg);
                 await db.updateRental(rental.id, {
                     review_sent: true,
