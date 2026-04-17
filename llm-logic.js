@@ -1,4 +1,7 @@
-const { OpenAI } = require("openai");
+const { OpenAI, toFile } = require("openai");
+const fs = require('fs/promises');
+const path = require('path');
+const os = require('os');
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "TU_CLAVE_AQUI",
@@ -42,8 +45,9 @@ CONOCIMIENTO TÉCNICO:
 - Toldo: NUNCA con viento fuerte. Recoger siempre antes de conducir.
 - Nivelación: Usar cuñas en ruedas bajas. Gatos solo para estabilizar, no para elevar.
 
-8. REGLAS DE COMPORTAMIENTO:
-- Tono: Profesional pero no robótico.
+8. REGLAS DE COMPORTAMIENTO Y LENGUAJE:
+- Tono: Profesional pero no robótico, amable.
+- Idioma (MULTILINGÜE MÁGICO): DETECTA AUTÓMATICAMENTE EL IDIOMA DEL MENSAJE DEL USUARIO Y RESPONDE EXACTAMENTE EN ESE MISMO IDIOMA de forma natural y nativa. Si el usuario escribe en inglés, responde en inglés. Si es alemán, en alemán. NUNCA respondas en español si el usuario no usó el español.
 - Videos: Si hablas de POTI o AGUAS, adjunta siempre estos links:
   - [VIDEO: Gestión del Poti](https://www.youtube.com/watch?v=8p_hI6_9b2Q)
   - [VIDEO: Llenado/Vaciado Aguas](https://www.youtube.com/watch?v=6YhS1W_mXzM)
@@ -105,4 +109,39 @@ async function processMessageAI(userMessage, history = []) {
     }
 }
 
-module.exports = { processMessageAI };
+/**
+ * Transcribe un buffer de audio (nota de voz de WhatsApp) a texto usando Whisper.
+ * @param {Buffer} audioBuffer - El buffer binario del audio descargado(.ogg)
+ */
+async function transcribeAudio(audioBuffer) {
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "TU_CLAVE_AQUI") {
+        return "⚠️ Sin API KEY para procesar audios.";
+    }
+
+    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.ogg`);
+    
+    try {
+        // Escribimos el buffer a un archivo temporal (Whisper requiere stream de archivo)
+        await fs.writeFile(tempFilePath, audioBuffer);
+
+        const fileStream = require('fs').createReadStream(tempFilePath);
+
+        const transcription = await openai.audio.transcriptions.create({
+            file: fileStream,
+            model: "whisper-1",
+        });
+
+        // Limpieza del archivo
+        await fs.unlink(tempFilePath).catch(console.error);
+
+        return transcription.text;
+    } catch (error) {
+        // Aseguramos borrado en caso de error
+        await fs.unlink(tempFilePath).catch(() => {});
+        console.error("Error en Transcripción de Audio:", error);
+        throw new Error("No he podido escuchar bien la nota de voz.");
+    }
+}
+
+module.exports = { processMessageAI, transcribeAudio };
+
