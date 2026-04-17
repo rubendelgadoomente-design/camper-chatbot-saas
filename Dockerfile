@@ -1,25 +1,24 @@
-# Usa una imagen de Node con soporte para Puppeteer/Chrome
-FROM ghcr.io/puppeteer/puppeteer:latest
+# Dockerfile para CamperBot con Meta Cloud API
+# Sin Chrome, sin Puppeteer, sin Baileys — imagen muy ligera
 
-USER root
+FROM node:18-slim
 
-# Crear directorio de la app
-WORKDIR /usr/src/app
+WORKDIR /app
 
 # Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias de producción
+RUN npm ci --only=production
 
-# Copiar el resto del código
+# Copiar código fuente
 COPY . .
 
-# Crear directorio de datos si no existe
-RUN mkdir -p data
+# Crear directorios necesarios
+RUN mkdir -p data public
 
-# Exponer el puerto
-EXPOSE 3001
+# Railway asigna el puerto dinámicamente via $PORT
+EXPOSE ${PORT:-3001}
 
-# Comando para arrancar
-CMD [ "node", "server.js" ]
+# Arrancar servidor Meta Cloud API
+CMD ["node", "server-meta.js"]
