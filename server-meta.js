@@ -1,7 +1,7 @@
 /**
- * server-meta.js — Servidor definitivo de CamperBot con Meta Cloud API
+ * server-meta.js â€” Servidor definitivo de CamperBot con Meta Cloud API
  * 
- * SIN Chrome, SIN Puppeteer, SIN WebSocket, SIN sesiones frágiles.
+ * SIN Chrome, SIN Puppeteer, SIN WebSocket, SIN sesiones frÃ¡giles.
  * Recibe mensajes via webhook de Meta, responde via REST API.
  * ~30MB de RAM. Estabilidad total.
  */
@@ -17,15 +17,15 @@ const whatsapp = require('./whatsapp-meta');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// --- CONFIGURACIÓN DE ESTADO Y LOGS ---
+// --- CONFIGURACIÃ“N DE ESTADO Y LOGS ---
 let logs = [];
 let isAIActive = true;
 
-// Memoria de conversación por usuario (ID -> [mensajes])
+// Memoria de conversaciÃ³n por usuario (ID -> [mensajes])
 const userContext = {};
 const MAX_HISTORY = 10;
 
-// Set para deduplicación de mensajes (evitar procesar el mismo mensaje 2 veces)
+// Set para deduplicaciÃ³n de mensajes (evitar procesar el mismo mensaje 2 veces)
 const processedMessages = new Set();
 const MAX_PROCESSED_CACHE = 1000;
 
@@ -37,7 +37,7 @@ const addLog = (user, message, type = 'user') => {
 };
 
 /**
- * Función para enviar mensajes programados (Bienvenida / Reseña)
+ * FunciÃ³n para enviar mensajes programados (Bienvenida / ReseÃ±a)
  */
 const sendProactiveMessage = async (phone, message) => {
     try {
@@ -49,7 +49,7 @@ const sendProactiveMessage = async (phone, message) => {
 };
 
 /**
- * Procesa un mensaje entrante (lógica de negocio del bot)
+ * Procesa un mensaje entrante (lÃ³gica de negocio del bot)
  */
 async function handleMessage(msg) {
     console.log(`[DEBUG] Msg detectado: ${msg.from} -> ${msg.body} (Me: ${msg.fromMe})`);
@@ -57,7 +57,7 @@ async function handleMessage(msg) {
     if (msg.type !== 'chat') return;
 
     let body = msg.body.trim();
-    const from = msg.from; // Número limpio sin @
+    const from = msg.from; // NÃºmero limpio sin @
 
     // --- MANEJO DE AUDIO (NOTAS DE VOZ) ---
     if (msg.isAudio && msg.audioId) {
@@ -67,17 +67,17 @@ async function handleMessage(msg) {
             body = await transcribeAudio(audioBuffer);
             console.log(`[DEBUG] Audio transcrito: "${body}"`);
             
-            // Si hay error en la transcripción, enviamos un aviso y cortamos el flujo
-            if (body.startsWith("⚠️")) {
+            // Si hay error en la transcripciÃ³n, enviamos un aviso y cortamos el flujo
+            if (body.startsWith("âš ï¸")) {
                 return whatsapp.sendMessage(from, body);
             }
         } catch (error) {
             console.error(`Error procesando nota de voz de ${from}:`, error);
-            return whatsapp.sendMessage(from, "Lo siento, no he podido escuchar bien la nota de voz. ¿Puedes escribírmelo? 🎙️➡️📝");
+            return whatsapp.sendMessage(from, "Lo siento, no he podido escuchar bien la nota de voz. Â¿Puedes escribÃ­rmelo? ðŸŽ™ï¸âž¡ï¸ðŸ“");
         }
     }
 
-    // Lista de administradores (tu número personal)
+    // Lista de administradores (tu nÃºmero personal)
     const adminNumbers = ['34616063682'];
     const isAdmin = adminNumbers.includes(from);
 
@@ -89,50 +89,50 @@ async function handleMessage(msg) {
 
         if (command === '/pausa') {
             isAIActive = false;
-            return whatsapp.sendMessage(from, '⏸️ Asistente IA pausado por el administrador.');
+            return whatsapp.sendMessage(from, 'â¸ï¸ Asistente IA pausado por el administrador.');
         }
         if (command === '/activa') {
             isAIActive = true;
-            return whatsapp.sendMessage(from, '▶️ Asistente IA reactivado.');
+            return whatsapp.sendMessage(from, 'â–¶ï¸ Asistente IA reactivado.');
         }
         if (command === '/resumen') {
             try {
                 const stats = await db.getStats();
-                let report = `📊 *RESUMEN DE SOPORTE MENSUAL*\n\n`;
-                report += `✅ Consultas resueltas: ${stats.total_queries}\n`;
+                let report = `ðŸ“Š *RESUMEN DE SOPORTE MENSUAL*\n\n`;
+                report += `âœ… Consultas resueltas: ${stats.total_queries}\n`;
                 report += `--------------------------\n`;
                 Object.entries(stats.categories).forEach(([name, count]) => {
                     if (count > 0) {
-                        const icon = name === 'wc' ? '🚽' : name === 'agua' ? '💧' : name === 'electricidad' ? '⚡' : '🔧';
+                        const icon = name === 'wc' ? 'ðŸš½' : name === 'agua' ? 'ðŸ’§' : name === 'electricidad' ? 'âš¡' : 'ðŸ”§';
                         report += `${icon} ${name.toUpperCase()}: ${count}\n`;
                     }
                 });
                 return whatsapp.sendMessage(from, report);
             } catch (e) {
-                return whatsapp.sendMessage(from, '❌ Error al generar el resumen.');
+                return whatsapp.sendMessage(from, 'âŒ Error al generar el resumen.');
             }
         }
         if (command === '/status') {
             const metrics = whatsapp.getMetrics();
-            const statusReport = `🤖 *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÍ' : 'NO'}\n- API: ${metrics.status}\n- Mensajes IN: ${metrics.totalMessagesIn}\n- Mensajes OUT: ${metrics.totalMessagesOut}\n- Errores: ${metrics.totalErrors}\n- RAM: ${metrics.memory}\n- Uptime: ${metrics.uptime}`;
+            const statusReport = `ðŸ¤– *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÃ' : 'NO'}\n- API: ${metrics.status}\n- Mensajes IN: ${metrics.totalMessagesIn}\n- Mensajes OUT: ${metrics.totalMessagesOut}\n- Errores: ${metrics.totalErrors}\n- RAM: ${metrics.memory}\n- Uptime: ${metrics.uptime}`;
             return whatsapp.sendMessage(from, statusReport);
         }
         if (command === '/ayuda') {
-            const helpMsg = '🛠️ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseña\n/resumen - Estadísticas';
+            const helpMsg = 'ðŸ› ï¸ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseÃ±a\n/resumen - EstadÃ­sticas';
             return whatsapp.sendMessage(from, helpMsg);
         }
         if (command === '/resena') {
             const parts = body.split(' ');
             if (parts.length < 2) return whatsapp.sendMessage(from, 'Uso: /resena [numero]');
             const target = parts[1].replace(/[^0-9]/g, '');
-            const msgReview = `¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, ¿podrías dejarnos una reseña? 👉 [LINK]`;
+            const msgReview = `Â¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, Â¿podrÃ­as dejarnos una reseÃ±a? ðŸ‘‰ [LINK]`;
             await whatsapp.sendMessage(target, msgReview);
-            return whatsapp.sendMessage(from, '✅ Reseña enviada.');
+            return whatsapp.sendMessage(from, 'âœ… ReseÃ±a enviada.');
         }
         return;
     }
 
-    // Ignorar mensajes propios (no debería llegar por webhook, pero por seguridad)
+    // Ignorar mensajes propios (no deberÃ­a llegar por webhook, pero por seguridad)
     if (msg.fromMe) return;
 
     // Ignorar grupos
@@ -140,7 +140,7 @@ async function handleMessage(msg) {
 
     addLog(from, body, 'user');
 
-    // --- LÓGICA DE ACTIVACIÓN POR QR ---
+    // --- LÃ“GICA DE ACTIVACIÃ“N POR QR ---
     if (body.toUpperCase().includes('ACTIVAR MI VIAJE')) {
         try {
             const rentals = await db.getRentals();
@@ -152,17 +152,17 @@ async function handleMessage(msg) {
                     welcome_sent: true
                 });
 
-                const welcomeMsg = `¡Hola ${rental.client_name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
+                const welcomeMsg = `Â¡Hola ${rental.client_name}! ðŸ‘‹ Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquÃ­ 24h para ayudarte. Â¿Tienes alguna duda tÃ©cnica ahora mismo?`;
                 return whatsapp.sendInteractiveButtons(from, welcomeMsg, [
-                    { id: 'btn_agua', title: '💧 Agua / Poti' },
-                    { id: 'btn_luz', title: '⚡ Luz / Nevera' },
-                    { id: 'btn_otros', title: '🔧 Otras dudas' }
+                    { id: 'btn_agua', title: 'ðŸ’§ Agua / Poti' },
+                    { id: 'btn_luz', title: 'âš¡ Luz / Nevera' },
+                    { id: 'btn_otros', title: 'ðŸ”§ Otras dudas' }
                 ]);
             } else {
-                return whatsapp.sendMessage(from, "¡Hola! 🚐 Para activar tu asistencia, asegúrate de que la empresa de alquiler ha registrado tu número correctamente.");
+                return whatsapp.sendMessage(from, "Â¡Hola! ðŸš Para activar tu asistencia, asegÃºrate de que la empresa de alquiler ha registrado tu nÃºmero correctamente.");
             }
         } catch (e) {
-            console.error("Error en activación:", e);
+            console.error("Error en activaciÃ³n:", e);
         }
     }
 
@@ -176,10 +176,10 @@ async function handleMessage(msg) {
             const aiResponse = aiData.response;
             const category = aiData.category;
 
-            // Actualizar estadísticas
+            // Actualizar estadÃ­sticas
             db.incrementStat(category);
 
-            // Marcar "problemas" en el alquiler si la duda es técnica
+            // Marcar "problemas" en el alquiler si la duda es tÃ©cnica
             try {
                 const rentals = await db.getRentals();
                 const currentRental = rentals.find(r => r.phone === from && r.status === 'active');
@@ -202,7 +202,7 @@ async function handleMessage(msg) {
             console.error('Error IA:', error);
         }
     } else {
-        console.log(`🔇 IA pausada, ignorando mensaje de ${from}`);
+        console.log(`ðŸ”‡ IA pausada, ignorando mensaje de ${from}`);
     }
 }
 
@@ -211,11 +211,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =====================================================
-// WEBHOOK de META — Recepción de mensajes de WhatsApp
+// WEBHOOK de META â€” RecepciÃ³n de mensajes de WhatsApp
 // =====================================================
 
 /**
- * GET /webhook — Verificación del webhook (Meta envía un challenge)
+ * GET /webhook â€” VerificaciÃ³n del webhook (Meta envÃ­a un challenge)
  * Se usa UNA sola vez cuando configuras el webhook en Meta Developers
  */
 app.get('/webhook', (req, res) => {
@@ -228,8 +228,8 @@ app.get('/webhook', (req, res) => {
 });
 
 /**
- * POST /webhook — Recepción de mensajes entrantes
- * Meta envía cada mensaje aquí como un POST con JSON
+ * POST /webhook â€” RecepciÃ³n de mensajes entrantes
+ * Meta envÃ­a cada mensaje aquÃ­ como un POST con JSON
  */
 app.post('/webhook', async (req, res) => {
     // IMPORTANTE: Responder 200 inmediatamente para que Meta no reintente
@@ -240,14 +240,14 @@ app.post('/webhook', async (req, res) => {
 
         if (!msg) return; // No es un mensaje de texto (status update, etc.)
 
-        // --- DEDUPLICACIÓN (evitar procesar el mismo mensaje 2 veces) ---
+        // --- DEDUPLICACIÃ“N (evitar procesar el mismo mensaje 2 veces) ---
         if (processedMessages.has(msg.messageId)) {
             console.log(`[Webhook] Mensaje duplicado ignorado: ${msg.messageId}`);
             return;
         }
         processedMessages.add(msg.messageId);
 
-        // Limpiar cache de deduplicación si crece demasiado
+        // Limpiar cache de deduplicaciÃ³n si crece demasiado
         if (processedMessages.size > MAX_PROCESSED_CACHE) {
             const entries = Array.from(processedMessages);
             entries.slice(0, entries.length - 500).forEach(id => processedMessages.delete(id));
@@ -262,7 +262,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // =====================================================
-// RUTAS DE NAVEGACIÓN Y API
+// RUTAS DE NAVEGACIÃ“N Y API
 // =====================================================
 
 app.get('/monitor', (req, res) => {
@@ -286,7 +286,7 @@ app.post('/api/rentals', async (req, res) => {
     const reviewLink = req.body.review_link || req.body.reviewLink;
 
     if (!name || !phone || !endDate) {
-        return res.status(400).json({ error: 'Datos incompletos. Se requiere nombre, teléfono y fecha.' });
+        return res.status(400).json({ error: 'Datos incompletos. Se requiere nombre, telÃ©fono y fecha.' });
     }
 
     phone = phone.replace(/\D/g, '');
@@ -318,7 +318,7 @@ app.post('/api/rentals', async (req, res) => {
         await db.saveRental(newRental);
         res.json({ success: true, message: 'Alquiler registrado correctamente.' });
     } catch (e) {
-        console.error('❌ ERROR TÉCNICO EN REGISTRO:', e);
+        console.error('âŒ ERROR TÃ‰CNICO EN REGISTRO:', e);
         res.status(500).json({ error: 'Fallo al guardar alquiler', details: e.message });
     }
 });
@@ -336,14 +336,14 @@ setInterval(async () => {
 
         for (const rental of activeRentals) {
             if (!rental.has_problems) {
-                const reviewMsg = `¡Hola ${rental.client_name}! Esperamos que tu experiencia haya sido increíble. 🚐 ¿Podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda mucho: ${rental.review_link}`;
+                const reviewMsg = `Â¡Hola ${rental.client_name}! Esperamos que tu experiencia haya sido increÃ­ble. ðŸš Â¿PodrÃ­as dedicarnos 1 minuto para dejarnos una reseÃ±a? Nos ayuda mucho: ${rental.review_link}`;
                 await sendProactiveMessage(rental.phone, reviewMsg);
                 await db.updateRental(rental.id, {
                     review_sent: true,
                     status: 'completed'
                 });
             } else {
-                console.log(`[SISTEMA] Saltando reseña para ${rental.phone} por problemas técnicos detectados.`);
+                console.log(`[SISTEMA] Saltando reseÃ±a para ${rental.phone} por problemas tÃ©cnicos detectados.`);
                 await db.updateRental(rental.id, { status: 'completed_no_review' });
             }
         }
@@ -358,7 +358,7 @@ app.get('/api/is-ai-active', (req, res) => res.json({ active: isAIActive }));
 // --- CHAT WEB (PROBADOR AI) ---
 app.post('/api/chat', async (req, res) => {
     const { message } = req.body;
-    if (!message) return res.status(400).json({ error: 'Mensaje vacío' });
+    if (!message) return res.status(400).json({ error: 'Mensaje vacÃ­o' });
 
     try {
         if (!userContext['web-tester']) userContext['web-tester'] = [];
@@ -387,11 +387,11 @@ app.get('/api/stats', async (req, res) => {
         const stats = await db.getStats();
         res.json(stats);
     } catch (e) {
-        res.status(500).json({ error: 'Fallo al leer estadísticas' });
+        res.status(500).json({ error: 'Fallo al leer estadÃ­sticas' });
     }
 });
 
-// --- HEALTH CHECK + MÉTRICAS ---
+// --- HEALTH CHECK + MÃ‰TRICAS ---
 app.get('/api/health', (req, res) => {
     const metrics = whatsapp.getMetrics();
     res.status(metrics.healthy ? 200 : 503).json(metrics);
@@ -410,10 +410,13 @@ app.get('/api/metrics', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
     const status = whatsapp.getStatus();
-    console.log(`🚀 Dashboard en http://localhost:${PORT}`);
-    console.log(`📡 Webhook en http://localhost:${PORT}/webhook`);
-    console.log(`📊 API Status: ${status.status}`);
+    console.log(`ðŸš€ Dashboard en http://localhost:${PORT}`);
+    console.log(`ðŸ“¡ Webhook en http://localhost:${PORT}/webhook`);
+    console.log(`ðŸ“Š API Status: ${status.status}`);
     if (!status.isConfigured) {
-        console.log('⚠️  Configura WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID en .env');
+        console.log('âš ï¸  Configura WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID en .env');
     }
 });
+
+process.on('uncaughtException', (err) => { console.error('🔥 CRITICAL ERROR:', err); });
+process.on('unhandledRejection', (reason, promise) => { console.error('🔥 UNHANDLED REJECTION:', reason); });
