@@ -1,2 +1,2 @@
 [start]
-cmd = "node server-meta.js"
+command = 'node server-meta.js'
