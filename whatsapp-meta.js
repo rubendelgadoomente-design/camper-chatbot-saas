@@ -15,10 +15,10 @@
 const https = require('https');
 
 // --- CONFIGURACIÓN (desde .env) ---
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;           // Access Token permanente
-const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID; // ID del número en Meta
+const WHATSAPP_TOKEN = (process.env.WHATSAPP_TOKEN || '').trim();
+const PHONE_NUMBER_ID = (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim();
 const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'camperbot_verify_2026';
-const API_VERSION = 'v21.0';
+const API_VERSION = 'v19.0';
 
 // --- MÉTRICAS ---
 const metrics = {
