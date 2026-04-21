@@ -125,9 +125,9 @@ async function handleMessage(msg) {
             const parts = body.split(' ');
             if (parts.length < 2) return whatsapp.sendMessage(from, 'Uso: /resena [numero]');
             const target = parts[1].replace(/[^0-9]/g, '');
-            const msgReview = `Â¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, Â¿podrÃ­as dejarnos una reseÃ±a? ðŸ‘‰ [LINK]`;
+            const msgReview = `¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, ¿podrías dejarnos una reseña? 👉 https://g.page/r/YOUR_LINK/review`;
             await whatsapp.sendMessage(target, msgReview);
-            return whatsapp.sendMessage(from, 'âœ… ReseÃ±a enviada.');
+            return whatsapp.sendMessage(from, '✅ Reseña enviada.');
         }
         return;
     }
@@ -152,17 +152,17 @@ async function handleMessage(msg) {
                     welcome_sent: true
                 });
 
-                const welcomeMsg = `Â¡Hola ${rental.client_name}! ðŸ‘‹ Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquÃ­ 24h para ayudarte. Â¿Tienes alguna duda tÃ©cnica ahora mismo?`;
+                const welcomeMsg = `¡Hola ${rental.client_name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
                 return whatsapp.sendInteractiveButtons(from, welcomeMsg, [
-                    { id: 'btn_agua', title: 'ðŸ’§ Agua / Poti' },
-                    { id: 'btn_luz', title: 'âš¡ Luz / Nevera' },
-                    { id: 'btn_otros', title: 'ðŸ”§ Otras dudas' }
+                    { id: 'btn_agua', title: '💧 Agua / Poti' },
+                    { id: 'btn_luz', title: '⚡ Luz / Nevera' },
+                    { id: 'btn_otros', title: '🔧 Otras dudas' }
                 ]);
             } else {
-                return whatsapp.sendMessage(from, "Â¡Hola! ðŸš Para activar tu asistencia, asegÃºrate de que la empresa de alquiler ha registrado tu nÃºmero correctamente.");
+                return whatsapp.sendMessage(from, "¡Hola! 🚐 Para activar tu asistencia, asegúrate de que la empresa de alquiler ha registrado tu número correctamente.");
             }
         } catch (e) {
-            console.error("Error en activaciÃ³n:", e);
+            console.error("Error en activación:", e);
         }
     }
 
@@ -176,10 +176,10 @@ async function handleMessage(msg) {
             const aiResponse = aiData.response;
             const category = aiData.category;
 
-            // Actualizar estadÃ­sticas
+            // Actualizar estadísticas
             db.incrementStat(category);
 
-            // Marcar "problemas" en el alquiler si la duda es tÃ©cnica
+            // Marcar "problemas" en el alquiler si la duda es técnica
             try {
                 const rentals = await db.getRentals();
                 const currentRental = rentals.find(r => r.phone === from && r.status === 'active');
@@ -202,7 +202,7 @@ async function handleMessage(msg) {
             console.error('Error IA:', error);
         }
     } else {
-        console.log(`ðŸ”‡ IA pausada, ignorando mensaje de ${from}`);
+        console.log(`🔇 IA pausada, ignorando mensaje de ${from}`);
     }
 }
 
@@ -211,11 +211,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // =====================================================
-// WEBHOOK de META â€” RecepciÃ³n de mensajes de WhatsApp
+// WEBHOOK de META — Recepción de mensajes de WhatsApp
 // =====================================================
 
 /**
- * GET /webhook â€” VerificaciÃ³n del webhook (Meta envÃ­a un challenge)
+ * GET /webhook — Verificación del webhook (Meta envía un challenge)
  * Se usa UNA sola vez cuando configuras el webhook en Meta Developers
  */
 app.get('/webhook', (req, res) => {
@@ -228,8 +228,8 @@ app.get('/webhook', (req, res) => {
 });
 
 /**
- * POST /webhook â€” RecepciÃ³n de mensajes entrantes
- * Meta envÃ­a cada mensaje aquÃ­ como un POST con JSON
+ * POST /webhook — Recepción de mensajes entrantes
+ * Meta envía cada mensaje aquí como un POST con JSON
  */
 app.post('/webhook', async (req, res) => {
     // IMPORTANTE: Responder 200 inmediatamente para que Meta no reintente
@@ -240,14 +240,14 @@ app.post('/webhook', async (req, res) => {
 
         if (!msg) return; // No es un mensaje de texto (status update, etc.)
 
-        // --- DEDUPLICACIÃ“N (evitar procesar el mismo mensaje 2 veces) ---
+        // --- DEDUPLICACIÓN (evitar procesar el mismo mensaje 2 veces) ---
         if (processedMessages.has(msg.messageId)) {
             console.log(`[Webhook] Mensaje duplicado ignorado: ${msg.messageId}`);
             return;
         }
         processedMessages.add(msg.messageId);
 
-        // Limpiar cache de deduplicaciÃ³n si crece demasiado
+        // Limpiar cache de deduplicación si crece demasiado
         if (processedMessages.size > MAX_PROCESSED_CACHE) {
             const entries = Array.from(processedMessages);
             entries.slice(0, entries.length - 500).forEach(id => processedMessages.delete(id));
@@ -262,7 +262,7 @@ app.post('/webhook', async (req, res) => {
 });
 
 // =====================================================
-// RUTAS DE NAVEGACIÃ“N Y API
+// RUTAS DE NAVEGACIÓN Y API
 // =====================================================
 
 app.get('/monitor', (req, res) => {
@@ -286,7 +286,7 @@ app.post('/api/rentals', async (req, res) => {
     const reviewLink = req.body.review_link || req.body.reviewLink;
 
     if (!name || !phone || !endDate) {
-        return res.status(400).json({ error: 'Datos incompletos. Se requiere nombre, telÃ©fono y fecha.' });
+        return res.status(400).json({ error: 'Datos incompletos. Se requiere nombre, teléfono y fecha.' });
     }
 
     phone = phone.replace(/\D/g, '');
@@ -318,7 +318,7 @@ app.post('/api/rentals', async (req, res) => {
         await db.saveRental(newRental);
         res.json({ success: true, message: 'Alquiler registrado correctamente.' });
     } catch (e) {
-        console.error('âŒ ERROR TÃ‰CNICO EN REGISTRO:', e);
+        console.error('❌ ERROR TÉCNICO EN REGISTRO:', e);
         res.status(500).json({ error: 'Fallo al guardar alquiler', details: e.message });
     }
 });
@@ -336,7 +336,7 @@ setInterval(async () => {
 
         for (const rental of activeRentals) {
             if (!rental.has_problems) {
-                const reviewMsg = `Â¡Hola ${rental.client_name}! Esperamos que tu experiencia haya sido increÃ­ble. ðŸš Â¿PodrÃ­as dedicarnos 1 minuto para dejarnos una reseÃ±a? Nos ayuda mucho: ${rental.review_link}`;
+                const reviewMsg = `¡Hola ${rental.client_name}! Esperamos que tu experiencia haya sido increíble. 🚐 ¿Podrías dedicarnos 1 minuto para dejarnos una reseña? Nos ayuda muchísimo: ${rental.review_link || 'https://g.page/r/YOUR_LINK/review'}`;
                 await sendProactiveMessage(rental.phone, reviewMsg);
                 await db.updateRental(rental.id, {
                     review_sent: true,
