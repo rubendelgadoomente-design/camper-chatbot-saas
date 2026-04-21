@@ -258,6 +258,9 @@ function getMetrics() {
     return {
         status: WHATSAPP_TOKEN ? 'Conectado' : 'Sin configurar',
         healthy: !!WHATSAPP_TOKEN && !!PHONE_NUMBER_ID && metrics.consecutiveFailures < 5,
+        debug_phone: PHONE_NUMBER_ID,
+        debug_token_len: WHATSAPP_TOKEN.length,
+        debug_token_hash: WHATSAPP_TOKEN.substring(0, 5) + '...' + WHATSAPP_TOKEN.substring(WHATSAPP_TOKEN.length - 5),
         lastIncoming: metrics.lastIncoming
             ? Math.round((now - metrics.lastIncoming) / 1000) + 's ago'
             : 'never',
