@@ -198,6 +198,28 @@ async function handleMessage(msg) {
 
             await whatsapp.sendMessage(from, aiResponse);
             addLog('Asistente', aiResponse, 'ai');
+
+            // --- INYECCIÓN DE MULTIMEDIA MVP ---
+            const mediaCatalog = {
+                'agua': { type: 'video', url: '', caption: '🎥 Videotutorial: Gestión de Aguas' }, // Dejar URL vacía hasta que las grabes
+                'electricidad': { type: 'image', url: '', caption: '📸 Panel Eléctrico Principal' },
+                'gas': { type: 'image', url: '', caption: '📸 Compartimento de Gas' },
+                'wc': { type: 'video', url: '', caption: '🎥 Videotutorial: Uso del Poti' }
+            };
+
+            if (mediaCatalog[category] && mediaCatalog[category].url) {
+                try {
+                    await whatsapp.sendMediaByUrl(
+                        from, 
+                        mediaCatalog[category].type, 
+                        mediaCatalog[category].url, 
+                        mediaCatalog[category].caption
+                    );
+                    addLog('Asistente', `[Media Enviado: ${category}]`, 'ai');
+                } catch (e) {
+                    console.error("Fallo enviando multimedia adjunto:", e);
+                }
+            }
         } catch (error) {
             console.error('Error IA:', error);
         }

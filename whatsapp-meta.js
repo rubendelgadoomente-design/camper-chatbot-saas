@@ -106,6 +106,63 @@ async function sendMessage(to, text) {
 }
 
 /**
+ * Envía un archivo multimedia (imagen/video) por URL
+ * @param {string} to - Número de teléfono
+ * @param {string} type - 'image' o 'video'
+ * @param {string} url - URL pública directa del archivo (terminada en .jpg, .mp4, etc)
+ * @param {string} caption - Texto opcional debajo de la foto
+ */
+async function sendMediaByUrl(to, type, url, caption = '') {
+    const cleanNumber = to.replace(/[^0-9]/g, '');
+
+    const payloadObj = {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: cleanNumber,
+        type: type
+    };
+
+    payloadObj[type] = {
+        link: url,
+        caption: caption
+    };
+
+    const payload = JSON.stringify(payloadObj);
+
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: 'graph.facebook.com',
+            port: 443,
+            path: `/${API_VERSION}/${PHONE_NUMBER_ID}/messages`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+                'Content-Length': Buffer.byteLength(payload, 'utf8')
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    console.log(`[Meta API] 🖼️ Multimedia (${type}) enviado a ${cleanNumber}`);
+                    resolve(true);
+                } else {
+                    console.error(`[Meta API] ❌ Error enviando multimedia ${res.statusCode}: ${data}`);
+                    reject(new Error(`Meta API error ${res.statusCode}: ${data}`));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+    });
+}
+
+/**
  * Envía un mensaje con reintentos (cola simple con backoff)
  */
 async function sendMessageWithRetry(to, text, maxRetries = 3) {
@@ -316,5 +373,6 @@ module.exports = {
     getStatus,
     getMetrics,
     downloadMedia,
+    sendMediaByUrl,
     WEBHOOK_VERIFY_TOKEN
 };
