@@ -67,17 +67,17 @@ async function handleMessage(msg) {
             body = await transcribeAudio(audioBuffer);
             console.log(`[DEBUG] Audio transcrito: "${body}"`);
             
-            // Si hay error en la transcripciÃ³n, enviamos un aviso y cortamos el flujo
-            if (body.startsWith("âš ï¸")) {
+            // Si hay error en la transcripción, enviamos un aviso y cortamos el flujo
+            if (body.startsWith("⚠️")) {
                 return whatsapp.sendMessage(from, body);
             }
         } catch (error) {
             console.error(`Error procesando nota de voz de ${from}:`, error);
-            return whatsapp.sendMessage(from, "Lo siento, no he podido escuchar bien la nota de voz. Â¿Puedes escribÃ­rmelo? ðŸŽ™ï¸âž¡ï¸ðŸ“");
+            return whatsapp.sendMessage(from, "Lo siento, no he podido escuchar bien la nota de voz. ¿Puedes escribírmelo? 🎙️➡️📝");
         }
     }
 
-    // Lista de administradores (tu nÃºmero personal)
+    // Lista de administradores (tu número personal)
     const adminNumbers = ['34616063682'];
     const isAdmin = adminNumbers.includes(from);
 

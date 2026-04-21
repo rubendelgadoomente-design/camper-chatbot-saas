@@ -124,48 +124,25 @@ async function sendMessageWithRetry(to, text, maxRetries = 3) {
     }
 }
 
-/**
- * Obtiene la URL de descarga y descarga el binario del medio desde Meta API
- * @param {string} mediaId - ID del medio entrante
- * @returns {Promise<Buffer>} - Buffer del audio/imagen
- */
 async function downloadMedia(mediaId) {
+    const axios = require('axios');
     // Paso 1: Obtener la URL del media
-    const urlPayload = await new Promise((resolve, reject) => {
-        const req = https.get({
-            hostname: 'graph.facebook.com',
-            path: `/${API_VERSION}/${mediaId}`,
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
-        }, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    resolve(JSON.parse(data));
-                } else {
-                    reject(new Error(`Meta Media API error ${res.statusCode}: ${data}`));
-                }
-            });
-        });
-        req.on('error', reject);
+    const responseUrl = await axios.get(`https://graph.facebook.com/${API_VERSION}/${mediaId}`, {
+        headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
     });
 
-    if (!urlPayload.url) throw new Error("No URL returned for media ID");
+    if (!responseUrl.data || !responseUrl.data.url) throw new Error("No URL returned for media ID");
 
     // Paso 2: Descargar el buffer usando la URL
-    return new Promise((resolve, reject) => {
-        const req = https.get(urlPayload.url, {
-            headers: { 'Authorization': `Bearer ${WHATSAPP_TOKEN}` }
-        }, (res) => {
-            if (res.statusCode !== 200) {
-                return reject(new Error(`Error downloading media binary: ${res.statusCode}`));
-            }
-            const chunks = [];
-            res.on('data', chunk => chunks.push(chunk));
-            res.on('end', () => resolve(Buffer.concat(chunks)));
-        });
-        req.on('error', reject);
+    const responseBinary = await axios.get(responseUrl.data.url, {
+        headers: { 
+            'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+            'User-Agent': 'curl/7.68.0' // A veces Meta rechaza peticiones sin User-Agent
+        },
+        responseType: 'arraybuffer'
     });
+
+    return Buffer.from(responseBinary.data);
 }
 
 /**
