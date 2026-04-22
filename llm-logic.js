@@ -103,7 +103,7 @@ async function transcribeAudio(audioBuffer) {
         return transcription.text;
     } catch (error) {
         console.error("Error en Transcripción de Audio:", error);
-        throw new Error("No he podido escuchar bien la nota de voz.");
+        throw error;
     }
 }
 
