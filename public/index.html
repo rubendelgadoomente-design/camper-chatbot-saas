@@ -3,238 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente Camper - Chat en Vivo</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #2e7d32;
-            --primary-dark: #1b5e20;
-            --accent: #ffb300;
-            --bg-overlay: rgba(0, 0, 0, 0.4);
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: url('https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=2070') no-repeat center center fixed;
-            background-size: cover;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--bg-overlay);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chat-card {
-            width: 90%;
-            max-width: 500px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            height: 80vh;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
-
-        .chat-header {
-            background: var(--primary);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .chat-header img {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            border: 3px solid white;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .chat-header h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            letter-spacing: 1px;
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8f9fa;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 12px 18px;
-            border-radius: 15px;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            position: relative;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-user {
-            background: var(--primary);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 2px;
-        }
-
-        .message-bot {
-            background: white;
-            color: #333;
-            align-self: flex-start;
-            border-bottom-left-radius: 2px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .chat-input-area {
-            padding: 20px;
-            background: white;
-            display: flex;
-            gap: 10px;
-            border-top: 1px solid #eee;
-        }
-
-        input {
-            flex: 1;
-            padding: 12px 20px;
-            border: 2px solid #eee;
-            border-radius: 30px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input:focus {
-            border-color: var(--primary);
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.2s, background 0.3s;
-        }
-
-        button:hover {
-            background: var(--primary-dark);
-            transform: scale(1.05);
-        }
-
-        .footer-link {
-            position: absolute;
-            bottom: 20px;
-            color: rgba(255,255,255,0.7);
-            text-decoration: none;
-            font-size: 0.8rem;
-        }
-
-        .footer-link:hover {
-            color: white;
-        }
-
-        /* Scrollbar */
-        .chat-messages::-webkit-scrollbar { width: 6px; }
-        .chat-messages::-webkit-scrollbar-track { background: transparent; }
-        .chat-messages::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-    </style>
+    <title>CamperBot | Software IA para Flotas de Autocaravanas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- Optional icon fallback -->
 </head>
 <body>
-    <div class="overlay">
-        <div class="chat-card">
-            <div class="chat-header">
-                <img src="https://i.ibb.co/vzX3v6K/camperbot-logo.png" alt="CamperBot">
-                <h2>CamperBot</h2>
-                <div style="font-size: 0.8rem; opacity: 0.8;">Tu asistente de confianza</div>
-            </div>
-            
-            <div class="chat-messages" id="chatMessages">
-                <div class="message message-bot">
-                    ¡Hola! Soy CamperBot. Estoy aquí para resolver tus dudas sobre autocaravanas, rutas y equipamiento. ¿En qué puedo ayudarte hoy?
-                </div>
-            </div>
 
-            <div class="chat-input-area">
-                <input type="text" id="userInput" placeholder="Escribe tu pregunta aquí..." autocomplete="off">
-                <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+    <nav class="navbar">
+        <div class="logo-container">
+            <img src="images/camper_logo.png" alt="CamperBot Logo">
+            <span>CamperBot</span>
+        </div>
+        <div class="nav-links">
+            <a href="#beneficios">Beneficios</a>
+            <a href="#demo">Cómo Funciona</a>
+            <a href="/monitor.html" style="font-size: 0.9em; opacity: 0.7;">Login Clientes</a>
+            <a href="#early-access" class="btn-primary" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">Early Access</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <div class="badge">🚀 BETA PRIVADA ABIERTA</div>
+            <h1>El primer mecánico virtual por WhatsApp para tu flota.</h1>
+            <p>Reduce un 80% las llamadas de emergencia en madrugada. Una IA entrenada que asiste a tus viajeros en ruta, en 12 idiomas, y blinda tus reseñas de Google Maps.</p>
+            <div class="cta-group">
+                <a href="#early-access" class="btn-primary">Solicitar Acceso Anticipado</a>
+                <a href="#demo" class="btn-secondary">Ver cómo funciona</a>
             </div>
         </div>
-        
-        <a href="/monitor" class="footer-link">Acceso Panel Administrador</a>
-    </div>
+    </header>
+
+    <section id="beneficios" class="features">
+        <div class="section-title">
+            <h2>Tecnología diseñada para rentadoras</h2>
+            <p>Tu negocio crece, tu estrés disminuye.</p>
+        </div>
+        <div class="grid-3">
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h3>Audios Mágicos (Whisper)</h3>
+                <p>Nuestros servidores transcriben audios directamente desde WhatsApp. Si el turista te habla desde la montaña agobiado por el Poti, le entenderemos a la perfección.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Marketing Defensivo</h3>
+                <p>La IA filtra a los viajeros cabreados. Si han tenido problemas mecánicos, el viaje se cierra en silencio. Si el viaje fue un éxito, les exige una reseña de 5 estrellas en tu Google Maps de forma automática.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📲</div>
+                <h3>Multimedia Inyectado</h3>
+                <p>Sube las fotos y vídeos de los paneles específicos de TUS furgonetas. Cuando el cliente diga "dónde está la válvula", el bot le enviará tu propio vídeo al instante.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="demo-section">
+        <div class="demo-image">
+            <div class="demo-phone">
+                <div class="demo-screen">
+                    <div class="wa-header">📸 WhatsApp</div>
+                    <div class="wa-bubble out">ACTIVAR MI VIAJE</div>
+                    <div class="wa-bubble">¡Hola Rubén! Soy tu mecánico IA 24/7. Elije una opción para que te ayude rápidamente.</div>
+                    <div class="wa-bubble out">No me sale agua caliente de la ducha</div>
+                    <div class="wa-bubble">Entiendo el problema. Vamos a solucionarlo en 3 pasos rápidos:<br>1. Asegúrate de encender el Gas.<br>2. Enciende el calentador en el panel principal.<br>3. Espera 15 minutos exactos para purgarlo.<br>[AGUA] 💧</div>
+                    <div class="wa-bubble out">🎙️ *Audio 0:04*</div>
+                    <div class="wa-bubble">Perfecto. Tienes razón, era cuestión de la bombona. ¡Solucionado! Que tengas buen ruta.</div>
+                </div>
+            </div>
+        </div>
+        <div class="demo-text">
+            <h2>Automatiza el alquiler, no pierdas el toque humano.</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.6;">
+                El sistema funciona por sí solo. Sin instalaciones de apps para tu cliente, usan el WhatsApp que ya tienen instalado.
+            </p>
+            
+            <div class="step">
+                <div class="step-number">1</div>
+                <div>
+                    <h3 style="margin: 0 0 0.5rem 0;">Registro desde tu móvil</h3>
+                    <p style="color: var(--text-muted); margin: 0;">Entra a tu Panel B2B, pon el número de tu cliente e invierte 3 segundos en darlo de alta.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div>
+                    <h3 style="margin: 0 0 0.5rem 0;">Escaneo Físico</h3>
+                    <p style="color: var(--text-muted); margin: 0;">El cliente escanea el código QR que has impreso y pegado en la furgoneta. Solo los que escapan acceden al bot.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div>
+                    <h3 style="margin: 0 0 0.5rem 0;">Tranquilidad 24/7</h3>
+                    <p style="color: var(--text-muted); margin: 0;">Duerme tranquilo sabiendo que CamperBot va a gestionar el 80% de las incidencias tontas de la madrugada.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="early-access" class="cta-section">
+        <div class="cta-box">
+            <h2>Entra al Piloto Privado.</h2>
+            <p style="font-size: 1.25rem; color: #cbd5e1; margin-bottom: 2.5rem; line-height: 1.6;">
+                Actualmente estamos aceptando solo a <strong>10 gestores de flota</strong> para nuestro programa de Early Access con un precio fundador vitalicio congelado y trato personalizado.
+            </p>
+            <form style="display: flex; gap: 15px; max-width: 500px; margin: 0 auto;">
+                <input type="email" placeholder="Tu email corporativo" style="flex:1; padding: 1rem; border-radius: 8px; border:none; outline:none; font-size:1rem;" required>
+                <button type="submit" class="btn-primary" style="padding: 1rem 1.5rem; cursor: pointer;">Entrar a la Waitlist</button>
+            </form>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">Cero Spam. Te contestaremos mañana para organizar una micro-demo por teléfono.</p>
+        </div>
+    </section>
+
+    <footer style="text-align: center; padding: 3rem 0; background: var(--dark); border-top: 1px solid var(--glass-border);">
+        <img src="images/camper_logo.png" style="height: 30px; opacity: 0.5; margin-bottom: 1rem;">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">© 2026 CamperBot SaaS. Todos los derechos reservados.</p>
+    </footer>
 
     <script>
-        const chatMessages = document.getElementById('chatMessages');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
-
-        function addMessage(text, isBot = false) {
-            const div = document.createElement('div');
-            div.className = `message ${isBot ? 'message-bot' : 'message-user'}`;
-            div.innerText = text;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (!text) return;
-
-            addMessage(text, false);
-            userInput.value = '';
-            
-            // Simular "escribiendo..."
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'message message-bot';
-            loadingDiv.innerText = 'Pensando...';
-            chatMessages.appendChild(loadingDiv);
-
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
-                });
-                const data = await response.json();
-                
-                chatMessages.removeChild(loadingDiv);
-                addMessage(data.response, true);
-            } catch (error) {
-                chatMessages.removeChild(loadingDiv);
-                addMessage('Lo siento, ha habido un problema de conexión.', true);
+        // Efecto parallax opcional en el nav
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('.navbar');
+            if(window.scrollY > 50) {
+                nav.style.background = 'rgba(15, 23, 42, 0.95)';
+                nav.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+            } else {
+                nav.style.background = 'rgba(15, 23, 42, 0.7)';
+                nav.style.borderBottom = '1px solid transparent';
             }
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
         });
     </script>
 </body>
