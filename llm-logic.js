@@ -3,6 +3,16 @@ const fs = require('fs/promises');
 const path = require('path');
 const os = require('os');
 
+// POLYFILL PARA NODE 18: OpenAI necesita 'File' global.
+if (typeof globalThis.File === 'undefined') {
+    globalThis.File = class File extends Blob {
+        constructor(bits, name, options = {}) {
+            super(bits, options);
+            this.name = name;
+        }
+    };
+}
+
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "TU_CLAVE_AQUI",
 });
