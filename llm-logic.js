@@ -89,26 +89,19 @@ async function transcribeAudio(audioBuffer) {
         return "⚠️ Sin API KEY para procesar audios.";
     }
 
-    const tempFilePath = path.join(os.tmpdir(), `audio_${Date.now()}.ogg`);
-    
     try {
-        // Escribimos el buffer a un archivo temporal (Whisper requiere stream de archivo)
-        await fs.writeFile(tempFilePath, audioBuffer);
-
-        const fileStream = require('fs').createReadStream(tempFilePath);
+        // Usamos toFile de OpenAI directamente sobre el Buffer en RAM, 
+        // evitando tocar el disco duro y evitando el error de 'globalThis.File'
+        const audioFile = await toFile(audioBuffer, 'audio.ogg', { type: 'audio/ogg' });
 
         const transcription = await openai.audio.transcriptions.create({
-            file: fileStream,
+            file: audioFile,
             model: "whisper-1",
         });
 
-        // Limpieza del archivo
-        await fs.unlink(tempFilePath).catch(console.error);
-
+        // Ya no necesitamos fs.unlink porque no guardamos en disco
         return transcription.text;
     } catch (error) {
-        // Aseguramos borrado en caso de error
-        await fs.unlink(tempFilePath).catch(() => {});
         console.error("Error en Transcripción de Audio:", error);
         throw new Error("No he podido escuchar bien la nota de voz.");
     }
