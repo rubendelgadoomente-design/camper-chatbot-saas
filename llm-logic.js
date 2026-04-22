@@ -110,7 +110,7 @@ async function transcribeAudio(audioBuffer) {
         // Aseguramos borrado en caso de error
         await fs.unlink(tempFilePath).catch(() => {});
         console.error("Error en Transcripción de Audio:", error);
-        throw error;
+        throw new Error("No he podido escuchar bien la nota de voz.");
     }
 }
 
