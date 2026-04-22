@@ -73,8 +73,7 @@ async function handleMessage(msg) {
             }
         } catch (error) {
             console.error(`Error procesando nota de voz de ${from}:`, error);
-            // DEBUG TEMPORAL: Mostrar el error real en WhatsApp para diagnosticar
-            return whatsapp.sendMessage(from, `[DEBUG ERROR AUDIO] ${error.message} \nStack: ${error.stack ? error.stack.substring(0, 100) : ''}`);
+            return whatsapp.sendMessage(from, "Lo siento, no he podido escuchar bien la nota de voz. ¿Puedes escribírmelo de momento? 🎙️➡️📝");
         }
     }
 
