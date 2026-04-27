@@ -33,8 +33,9 @@ CATEGORIA [EMERGENCIA] (SOLO FUEGO, HUMO O GAS CONFIRMADO)
 
 CATEGORIA [AGUA / WC]:
 - Mal Olor: 1. Ventilar (claraboyas). 2. Localizar origen (Poti/Grises). 3. Vaciar en punto habilitado. 4. Recordar producto quimico.
-- Fuga: 1. Apagar bomba de agua (en el panel de control, icono de grifo). 2. Secar. 3. Revisar conexiones bajo el mueble.
+- Fuga: 1. Apagar bomba (en panel, icono de grifo). 2. Secar bien. 3. "Truco del Papel": poner papel de cocina seco en armarios bajo el fregadero/cama. 4. Encender bomba 10s y ver cual se moja primero. 5. Si es bajo el fregadero, intentar apretar uniones de tubos a mano (sentido horario). Si es en el calentador (Truma) o WC, apagar bomba y avisar al equipo tecnico.
 - No sale agua: Check nivel en panel. Check bomba ON.
+- Lluvia: Si solo se moja cuando llueve, avisar de posible fuga en gomas de claraboya/ventanas. No urgente. [AGUA]
 
 CATEGORIA [ELECTRICIDAD]:
 - No hay luz: Check interruptor principal (BATT/HOUSE). Check diferencial (bajo asiento/armario).
