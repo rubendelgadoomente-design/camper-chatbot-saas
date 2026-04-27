@@ -17,27 +17,16 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "TU_CLAVE_AQUI",
 });
 
-// BASE DE CONOCIMIENTO (Extraída del Manual de Soporte v1.0)
-const CAMPER_KNOWLEDGE = `
-Eres un asistente experto en autocaravanas de "CamperBot". Tu objetivo es dar soporte rápido, amable y MUY conciso. 
-REGLA DE ORO DE IDIOMA: EL ASISTENTE DEBE FLUIR Y RESPONDER EXCLUSIVAMENTE EN EL IDIOMA DEL USUARIO. SI EL USUARIO DICE "HELLO", RESPONDE EN INGLÉS. SI DICE "NIHAO", RESPONDE EN CHINO. ¡ESTO ES CRÍTICO! NUNCA RESPONDAS EN ESPAÑOL SI EL MENSAJE ORIGINAL ES EN OTRO IDIOMA.
-
-REGLAS DE FORMATO Y COMPORTAMIENTO (ESTILO "CHALLENGER"):
-1. PÁRRAFOS CORTOS: La lectura en móvil es difícil. Separa tu respuesta en párrafos ultra-cortos (máximo 2 líneas por párrafo). Usa saltos de línea constantemente.
-2. USO INTENSIVO DE NEGRITAS (*): Resalta SIEMPRE con un solo asterisco las palabras clave, piezas, o instrucciones principales. Por ejemplo: "Abre la *válvula roja* y saca el *depósito inferior*." (Recuerda: usa *asterisco simple*, no doble asterisco).
-3. PROACTIVIDAD SIEMPRE: Nunca termines un mensaje sin interactuar. Si le ofreces una instrucción, termina SIEMPRE la respuesta haciéndole una pregunta. Ejemplos: "¿Quieres que revise si es la bomba de agua o el fusible?", "¿Me avisas cuando presiones el botón?".
-4. TONO: Muy servicial, educado, liderando la conversación.
-
-CONOCIMIENTO TÉCNICO BÁSICO:
-- Electricidad: Cabina vs Vivienda. Sin luz: Check panel, check cable, arrancar motor, revisar diferencial interior.
-- Agua: Sin agua: revisar nivel, encender bomba, purgar aire (abrir grifo). Sin agua caliente: Gas ON, Calentador ON, esperar 15m.
-- Gas: No enciende: Abrir bombona, purgar aire (pulsar 15s). Olor a gas: VENTILAR Y SALIR (112).
-- Poti / WC: Abrir válvula, usar papel especial, vaciar al rojo. [VIDEO Poti](https://www.youtube.com/watch?v=8p_hI6_9b2Q)
-- Nevera: En ruta (12V), En camping (220V), Parado (Gas). No enfría: Nivelar furgo.
-
-NUEVA REGLA DE SALIDA:
-Al final de tu respuesta, añade SIEMPRE una sola palabra entre corchetes con la categoría: [ELECTRICIDAD], [AGUA], [GAS], [WC], [NEVERA], [CALEFACCION], [NORMATIVA] u [OTROS]. Ejemplo: "... [WC]"
-`;
+// BASE DE CONOCIMIENTO (Cargada desde system-prompt.txt - Manual Completo v2)
+let SYSTEM_PROMPT = '';
+try {
+    const fsSync = require('fs');
+    SYSTEM_PROMPT = fsSync.readFileSync(path.join(__dirname, 'system-prompt.txt'), 'utf-8');
+    console.log(`✅ System prompt cargado: ${SYSTEM_PROMPT.length} caracteres`);
+} catch (err) {
+    console.error('ERROR CRITICO: No se pudo cargar system-prompt.txt:', err.message);
+    process.exit(1);
+}
 
 /**
  * Procesa un mensaje usando OpenAI con historial de conversación.
@@ -46,7 +35,7 @@ Al final de tu respuesta, añade SIEMPRE una sola palabra entre corchetes con la
  */
 async function processMessageAI(userMessage, history = []) {
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "TU_CLAVE_AQUI") {
-        return { 
+        return {
             response: "⚠️ Configurador: Falta la clave de OpenAI (OPENAI_API_KEY). Por favor, contacta con soporte.",
             category: "OTROS"
         };
@@ -55,7 +44,7 @@ async function processMessageAI(userMessage, history = []) {
     try {
         // Construir el array de mensajes para OpenAI (System + Historial + Mensaje Actual)
         const messages = [
-            { role: "system", content: CAMPER_KNOWLEDGE },
+            { role: "system", content: SYSTEM_PROMPT },
             ...history,
             { role: "user", content: userMessage }
         ];
@@ -63,27 +52,27 @@ async function processMessageAI(userMessage, history = []) {
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: messages,
-            temperature: 0.5, // Más preciso para manuales técnicos
-            max_tokens: 800
+            temperature: 0.3, // Más conservador para respuestas técnicas consistentes
+            max_tokens: 500   // Respuestas concisas pero con margen para pasos técnicos
         });
 
         let reply = completion.choices[0].message.content;
-        
+
         if (!reply) throw new Error("Respuesta vacía de OpenAI");
 
-        // Extraer categoría de los corchetes [CATEGORIA]
-        const categoryMatch = reply.match(/\[([A-Z]+)\]/);
+        // Extraer categoría de los corchetes [CATEGORIA] (soporta guion bajo para PRIMEROS_PASOS etc.)
+        const categoryMatch = reply.match(/\[([A-Z_]+)\]/);
         const category = categoryMatch ? categoryMatch[1].toLowerCase() : "otros";
-        
+
         // Limpiar la respuesta para el usuario (quitar la etiqueta)
-        reply = reply.replace(/\[[A-Z]+\]/, "").trim();
+        reply = reply.replace(/\[[A-Z_]+\]/, "").trim();
 
         return { response: reply, category: category };
 
     } catch (error) {
         console.error("Error en OpenAI Logic:", error.message);
-        
-        return { 
+
+        return {
             response: "Lo siento, ha habido un problema técnico con mi 'cerebro' de IA. ¿Puedo ayudarte con lo básico (agua, luz, gas) mediante el manual impreso mientras me recupero?",
             category: "OTROS"
         };
