@@ -69,7 +69,7 @@ async function incrementStat(category) {
         } else {
             current.categories['otros'] += 1;
         }
-        
+
         const { error } = await supabase
             .from('stats')
             .upsert({ id: 1, ...current });
@@ -149,11 +149,124 @@ async function getRentalByPhone(phone) {
     }
 }
 
+/**
+ * Guarda el feedback de un usuario tras una conversación
+ */
+async function saveFeedback(feedbackData) {
+    const entry = {
+        id: Date.now(),
+        phone: feedbackData.phone || 'desconocido',
+        rating: feedbackData.rating,
+        comment: feedbackData.comment || '',
+        category: feedbackData.category || 'otros',
+        resolved_without_human: feedbackData.resolved_without_human !== false,
+        created_at: new Date().toISOString()
+    };
+
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('feedback')
+            .insert([entry]);
+        if (error) throw error;
+        return data;
+    } else {
+        const filePath = path.join(__dirname, 'data', 'feedback.json');
+        let feedbackList = [];
+        if (fs.existsSync(filePath)) {
+            feedbackList = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+        feedbackList.push(entry);
+        fs.writeFileSync(filePath, JSON.stringify(feedbackList, null, 2));
+        return entry;
+    }
+}
+
+/**
+ * Obtiene todo el feedback almacenado
+ */
+async function getAllFeedback() {
+    if (supabase) {
+        const { data, error } = await supabase
+            .from('feedback')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } else {
+        const filePath = path.join(__dirname, 'data', 'feedback.json');
+        if (fs.existsSync(filePath)) {
+            return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        }
+        return [];
+    }
+}
+
+/**
+ * Genera un resumen agregado del feedback
+ */
+async function getFeedbackSummary() {
+    const allFeedback = await getAllFeedback();
+    if (allFeedback.length === 0) {
+        return { total: 0, average: 0, distribution: {}, recent: [] };
+    }
+
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let sum = 0;
+    let resolvedCount = 0;
+
+    allFeedback.forEach(f => {
+        distribution[f.rating] = (distribution[f.rating] || 0) + 1;
+        sum += f.rating;
+        if (f.resolved_without_human) resolvedCount++;
+    });
+
+    return {
+        total: allFeedback.length,
+        average: (sum / allFeedback.length).toFixed(1),
+        distribution,
+        resolved_rate: ((resolvedCount / allFeedback.length) * 100).toFixed(0) + '%',
+        recent: allFeedback.slice(0, 10)
+    };
+}
+
+/**
+ * RAG: Busca fragmentos de manuales en la base de datos usando similitud vectorial
+ */
+async function searchKnowledgeBase(queryEmbedding, companyId) {
+    if (!supabase) {
+        console.warn('⚠️ Supabase no configurado. Búsqueda RAG deshabilitada.');
+        return [];
+    }
+
+    try {
+        const { data, error } = await supabase.rpc('match_documents', {
+            query_embedding: queryEmbedding,
+            match_threshold: 0.70, // Similitud mínima (70%)
+            match_count: 3, // Recuperar los 3 mejores fragmentos
+            p_company_id: companyId
+        });
+
+        if (error) {
+            console.error("Error en búsqueda RAG (Supabase RPC):", error.message);
+            return [];
+        }
+
+        return data || [];
+    } catch (error) {
+        console.error("Excepción en searchKnowledgeBase:", error.message);
+        return [];
+    }
+}
+
 module.exports = {
     saveRental,
     getStats,
     incrementStat,
     getRentals,
     updateRental,
-    getRentalByPhone
+    getRentalByPhone,
+    saveFeedback,
+    getAllFeedback,
+    getFeedbackSummary,
+    searchKnowledgeBase
 };

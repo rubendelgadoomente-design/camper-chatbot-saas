@@ -2,6 +2,7 @@ const { OpenAI, toFile } = require("openai");
 const fs = require('fs/promises');
 const path = require('path');
 const os = require('os');
+const db = require('./database');
 
 // POLYFILL PARA NODE 18: OpenAI necesita 'File' global.
 if (typeof globalThis.File === 'undefined') {
@@ -17,12 +18,28 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || "TU_CLAVE_AQUI",
 });
 
-// BASE DE CONOCIMIENTO (Cargada desde system-prompt.txt - Manual Completo v2)
+// BASE DE CONOCIMIENTO (Cargada desde system-prompt.txt - CamperBot v4.0 SaaS)
 let SYSTEM_PROMPT = '';
 try {
     const fsSync = require('fs');
-    SYSTEM_PROMPT = fsSync.readFileSync(path.join(__dirname, 'system-prompt.txt'), 'utf-8');
-    console.log(`✅ System prompt cargado: ${SYSTEM_PROMPT.length} caracteres`);
+    let rawPrompt = fsSync.readFileSync(path.join(__dirname, 'system-prompt.txt'), 'utf-8');
+
+    // Inyectar variables de empresa desde .env (modelo SaaS multi-empresa)
+    const companyVars = {
+        '{{COMPANY_NAME}}': process.env.COMPANY_NAME || 'CamperBot',
+        '{{SUPPORT_PHONE}}': process.env.SUPPORT_PHONE || '(no configurado)',
+        '{{SUPPORT_HOURS}}': process.env.SUPPORT_HOURS || 'Lunes a Domingo, 9:00 - 21:00',
+        '{{REVIEW_LINK}}': process.env.REVIEW_LINK || 'https://g.page/r/YOUR_LINK/review',
+    };
+
+    for (const [placeholder, value] of Object.entries(companyVars)) {
+        rawPrompt = rawPrompt.split(placeholder).join(value);
+    }
+
+    SYSTEM_PROMPT = rawPrompt;
+    console.log(`✅ System prompt v4.0 cargado: ${SYSTEM_PROMPT.length} caracteres`);
+    console.log(`   Empresa: ${companyVars['{{COMPANY_NAME}}']}`);
+    console.log(`   Soporte: ${companyVars['{{SUPPORT_PHONE}}']}`);
 } catch (err) {
     console.error('ERROR CRITICO: No se pudo cargar system-prompt.txt:', err.message);
     process.exit(1);
@@ -32,8 +49,9 @@ try {
  * Procesa un mensaje usando OpenAI con historial de conversación.
  * @param {string} userMessage - El mensaje actual del usuario.
  * @param {Array} history - Historial previo [{role: 'user', content: '...'}, ...]
+ * @param {string} companyId - ID de la empresa para la base de conocimiento
  */
-async function processMessageAI(userMessage, history = []) {
+async function processMessageAI(userMessage, history = [], companyId = process.env.COMPANY_ID || 'default') {
     if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "TU_CLAVE_AQUI") {
         return {
             response: "⚠️ Configurador: Falta la clave de OpenAI (OPENAI_API_KEY). Por favor, contacta con soporte.",
@@ -42,9 +60,30 @@ async function processMessageAI(userMessage, history = []) {
     }
 
     try {
+        // RAG: Buscar información en la base de datos
+        let ragContext = "No hay información adicional en el manual para esta consulta.";
+        try {
+            const embedResponse = await openai.embeddings.create({
+                model: "text-embedding-3-small",
+                input: userMessage,
+                encoding_format: "float",
+            });
+            const queryEmbedding = embedResponse.data[0].embedding;
+            
+            const docs = await db.searchKnowledgeBase(queryEmbedding, companyId);
+            if (docs && docs.length > 0) {
+                ragContext = docs.map(d => d.content).join("\n\n---\n\n");
+            }
+        } catch (e) {
+            console.error("Error al buscar contexto RAG:", e.message);
+        }
+
+        // Inyectar el contexto recuperado en el prompt
+        const finalSystemPrompt = SYSTEM_PROMPT.replace('{{RAG_CONTEXT}}', ragContext);
+
         // Construir el array de mensajes para OpenAI (System + Historial + Mensaje Actual)
         const messages = [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: finalSystemPrompt },
             ...history,
             { role: "user", content: userMessage }
         ];

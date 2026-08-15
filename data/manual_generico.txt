@@ -1,0 +1,81 @@
+[EMERGENCIA] — SOLO fuego, humo o CONFIRMACIÓN de olor a gas
+"⚠️ *ATENCIÓN*: Sal del vehículo inmediatamente con todos los
+ocupantes. Cierra la llave general del gas (exterior, compartimento
+lateral) y llama al *112*.
+Después contacta con la empresa de alquiler.
+No enciendas ni apagues ningún aparato eléctrico.
+
+IMPORTANTE: Si el olor es "desagradable" o "mal olor" pero NO a gas,
+NO actives emergencia. Es probablemente el WC o las aguas grises.
+
+[AGUA / WC]
+- Mal olor → 1. Ventilar (abrir claraboyas). 2. Localizar origen
+  (poti/aguas grises). 3. Vaciar en punto habilitado. 4. Usar
+  producto químico específico para WC portátil.
+- No sale agua → 1. Comprobar nivel del depósito en el panel.
+  2. Activar la bomba de agua (botón con icono de grifo/gota).
+  3. Si la bomba suena pero no sale agua, depósito vacío.
+- Fuga de agua → 1. Apagar la bomba inmediatamente. 2. Secar la zona.
+  3. Truco: colocar papel de cocina seco bajo tuberías visibles,
+  encender bomba 10 segundos y ver qué papel se moja primero.
+  4. Si es una unión del fregadero, intentar apretar a mano (sentido
+  horario). 5. Si es en el calentador o WC, apagar bomba y escalar
+  a soporte humano.
+- Solo se moja cuando llueve → Posible fuga en goma de claraboya o
+  ventana. No es urgente pero avisar a la empresa.
+
+[ELECTRICIDAD]
+- No hay luz → 1. Comprobar interruptor principal (BATT/HOUSE en el
+  panel). 2. Comprobar el diferencial (pequeña palanca, suele estar
+  bajo un asiento o en un armario bajo).
+- No cargan móviles → ¿Estás en camping con cable conectado? Si no,
+  necesitas encender el *inversor* (convierte 12V en 220V). Busca el
+  botón del inversor en el panel o bajo un asiento.
+- Conectar al camping → Usar el cable azul CEE (enchufe industrial
+  azul). Conectar PRIMERO al poste del camping, DESPUÉS a la
+  autocaravana. Si salta, revisar el diferencial del poste.
+- NOTA INTERNACIONAL: En Alemania/Austria pueden usar enchufe Schuko
+  (doméstico). En UK/Irlanda necesitarás adaptador de 3 clavijas.
+  Si tu cable no encaja, pide adaptador en recepción del camping.
+
+[GAS]
+- No enciende la cocina → 1. Comprobar que la bombona esté abierta
+  (llave en sentido antihorario). 2. Comprobar si hay segunda llave
+  de paso (bajo los fogones). 3. Si lleva tiempo sin usarse, dejar
+  el botón pulsado 10-15 segundos para purgar el aire.
+- NOTA INTERNACIONAL sobre bombonas:
+  · España: Campingaz (azul) o Repsol (naranja).
+  · Francia: Campingaz fácil de encontrar, Butagaz en supermercados.
+  · Alemania/Austria: bombonas grises de propano (sistema de fianza).
+  · Italia: bombonas verdes, solo en ferreterías autorizadas.
+  · CONSEJO: Antes de cruzar la frontera, llena la bombona.
+
+[NEVERA]
+- No enfría → 1. Comprobar que la autocaravana esté lo más nivelada
+  posible (las neveras de absorción necesitan estar planas para
+  funcionar bien). 2. Comprobar el modo: GAS si estás parado sin
+  conexión, 220V si estás en camping, 12V solo en marcha.
+- Si hace mucho calor (>35°C) es NORMAL que rinda menos. No es avería.
+
+[CALEFACCIÓN / AGUA CALIENTE]
+- No arranca → 1. Comprobar que haya gas. 2. Comprobar que la bomba
+  de agua esté encendida (para agua caliente). 3. Si da un código de
+  error en la pantalla, dime cuál es y te ayudo.
+- Tarda en calentar → Normal si lleva horas apagada. Esperar 15-20 min.
+
+[MECÁNICA / CARRETERA]
+- Motor sobrecalentado → "Detén el vehículo en un lugar seguro.
+  *NO abras el radiador* en caliente (riesgo de quemadura grave).
+  Espera mínimo 30 minutos. Llama a asistencia en carretera.
+- Ruidos extraños → Si son frenos, vibraciones en volante o dirección,
+  circular despacio hasta un lugar seguro y llamar al propietario.
+  NUNCA intentar reparar nada mecánico por cuenta propia.
+
+[SEGURIDAD / CERRADURAS]
+- Puerta principal atascada → El mecanismo habitual es de 3 puntos
+  (Seitz). Intentar: levantar ligeramente la puerta mientras giras
+  la manilla. Si no funciona, NO forzar.
+- Llaves dentro → No intentar forzar cerraduras. Llamar a la empresa.
+  Si es de noche, llamar a un cerrajero local (112 puede orientar).
+- Compartimentos exteriores → Las llaves suelen ser las mismas que
+  las de la puerta principal. Comprobar el llavero completo.
