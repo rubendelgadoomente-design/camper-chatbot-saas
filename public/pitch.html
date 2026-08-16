@@ -41,6 +41,7 @@
     border-bottom: 1px solid var(--border);
   }
   .nav-logo { display: flex; align-items: center; gap: 10px; }
+  .nav-logo img { width: 38px; height: 38px; object-fit: contain; border-radius: 8px; }
   .nav-logo span { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
   .nav-logo span em { color: var(--primary); font-style: normal; }
   .nav-slides { display: flex; gap: 6px; }
@@ -110,6 +111,11 @@
   .hero-visual {
     position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
     width: 420px;
+    animation: floatHero 4s ease-in-out infinite;
+  }
+  @keyframes floatHero {
+    0%, 100% { transform: translateY(-50%) translateY(0px); }
+    50% { transform: translateY(-50%) translateY(-18px); }
   }
 
   /* ── SLIDE 2: PROBLEMA ── */
@@ -409,6 +415,7 @@
 <!-- NAV -->
 <nav>
   <div class="nav-logo">
+    <img src="/images/logo_3d.png" alt="CamperBot Logo">
     <span>Camper<em>Bot</em></span>
   </div>
   <div class="nav-slides" id="navDots"></div>
@@ -445,6 +452,7 @@
       </div>
     </div>
   </div>
+  <img class="hero-visual" src="/images/logo_3d.png" alt="CamperBot">
 </section>
 
 <!-- ══════════════════════════════════════════
