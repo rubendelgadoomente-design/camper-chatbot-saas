@@ -258,7 +258,31 @@ async function searchKnowledgeBase(queryEmbedding, companyId) {
     }
 }
 
+/**
+ * Busca una imagen relevante para una categoría y empresa
+ */
+async function getImageForCategory(category, companyId = 'generic') {
+    try {
+        // Try company-specific first, then generic
+        let { data, error } = await supabase
+            .from('image_library')
+            .select('image_url, description, subcategory')
+            .eq('category', category)
+            .eq('active', true)
+            .in('company_id', [companyId, 'generic'])
+            .order('company_id', { ascending: false }) // company-specific first
+            .limit(1);
+        
+        if (error || !data || data.length === 0) return null;
+        return data[0];
+    } catch (e) {
+        console.error('[DB] Error buscando imagen:', e.message);
+        return null;
+    }
+}
+
 module.exports = {
+    getImageForCategory,
     saveRental,
     getStats,
     incrementStat,

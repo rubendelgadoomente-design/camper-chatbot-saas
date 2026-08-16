@@ -1,0 +1,40 @@
+MEJORA 1 - PRIMEROS PASOS / CHECK-IN (Categoría nueva)
+
+El 40-50% de las consultas de turistas que alquilan por primera vez son del tipo "acabo de recoger la autocaravana y no sé por dónde empezar".
+
+Problemas a cubrir:
+
+- "Acabo de recoger la autocaravana, ¿qué hago primero?" → Checklist de arranque (abrir gas, encender panel, llenar agua, check eléctrico)
+- "¿Cómo se nivela la autocaravana?" → Calzos, app de nivel, por qué importa (nevera)
+- "¿Dónde está cada cosa?" → Ubicación general de paneles, llaves de gas, enchufes
+- "¿Cómo conecto al camping?" → Cable CEE azul, poste eléctrico, diferencial
+
+
+MEJORA 2 - CONECTORES ELÉCTRICOS POR PAÍS EUROPEO (Añadir al apartado de electricidad)
+
+Los turistas cruzan fronteras y los enchufes de camping varían.
+
+- CEE 16A (enchufe azul industrial): estándar en casi toda Europa
+- Schuko (enchufe doméstico alemán): habitual en campings de Alemania, Austria, Suiza
+- Adaptador UK (3 clavijas): imprescindible en Reino Unido e Irlanda
+- Consejo: "Pide un adaptador en recepción del camping si tu cable no encaja"
+
+
+MEJORA 3 - BOMBONAS DE GAS POR PAÍS (Añadir a la categoría de Gas)
+
+Esto es un dolor de cabeza real para viajeros. Las bombonas no son universales.
+
+- España: Repsol/Campsa (naranja), Campingaz (azul) en gasolineras
+- Francia: Campingaz fácil, Butagaz en supermercados
+- Alemania/Austria: bombonas grises de propano (sistema de depósito/fianza)
+- Italia: bombonas verdes, solo en ferretería autorizada
+- Consejo universal: "Antes de salir del país donde recoges la caravana, lleva la bombona llena"
+
+
+MEJORA 4 - SEGURIDAD Y CERRADURAS (Categoría nueva o sub-apartado)
+
+"No puedo abrir la puerta" o "se me ha cerrado" es más común de lo que parece.
+
+- Puerta principal atascada (mecanismo Seitz de 3 puntos)
+- Habitáculo cerrado con llave dentro
+- Cerradura de compartimento exterior (agua, gas, cassette)

@@ -21,13 +21,18 @@ const PORT = process.env.PORT || 3001;
 let logs = [];
 let isAIActive = true;
 
-// Memoria de conversaciÃ³n por usuario (ID -> [mensajes])
+// Memoria de conversación por usuario (ID -> [mensajes])
 const userContext = {};
 const MAX_HISTORY = 10;
 
-// Set para deduplicaciÃ³n de mensajes (evitar procesar el mismo mensaje 2 veces)
+// Set para deduplicación de mensajes (evitar procesar el mismo mensaje 2 veces)
 const processedMessages = new Set();
 const MAX_PROCESSED_CACHE = 1000;
+
+// Estado de feedback por usuario (para capturar puntuación y comentarios)
+// Posibles estados: null, 'awaiting_rating', 'awaiting_comment'
+const feedbackState = {};
+const lastCategory = {}; // Última categoría detectada por usuario
 
 const addLog = (user, message, type = 'user') => {
     const timestamp = new Date().toLocaleTimeString();
@@ -37,7 +42,7 @@ const addLog = (user, message, type = 'user') => {
 };
 
 /**
- * FunciÃ³n para enviar mensajes programados (Bienvenida / ReseÃ±a)
+ * Función para enviar mensajes programados (Bienvenida / Reseña)
  */
 const sendProactiveMessage = async (phone, message) => {
     try {
@@ -49,7 +54,7 @@ const sendProactiveMessage = async (phone, message) => {
 };
 
 /**
- * Procesa un mensaje entrante (lÃ³gica de negocio del bot)
+ * Procesa un mensaje entrante (lógica de negocio del bot)
  */
 async function handleMessage(msg) {
     console.log(`[DEBUG] Msg detectado: ${msg.from} -> ${msg.body} (Me: ${msg.fromMe})`);
@@ -57,7 +62,7 @@ async function handleMessage(msg) {
     if (msg.type !== 'chat') return;
 
     let body = msg.body.trim();
-    const from = msg.from; // NÃºmero limpio sin @
+    const from = msg.from; // Número limpio sin @
 
     // --- MANEJO DE AUDIO (NOTAS DE VOZ) ---
     if (msg.isAudio && msg.audioId) {
@@ -66,7 +71,7 @@ async function handleMessage(msg) {
             const audioBuffer = await whatsapp.downloadMedia(msg.audioId);
             body = await transcribeAudio(audioBuffer);
             console.log(`[DEBUG] Audio transcrito: "${body}"`);
-            
+
             // Si hay error en la transcripción, enviamos un aviso y cortamos el flujo
             if (body.startsWith("⚠️")) {
                 return whatsapp.sendMessage(from, body);
@@ -89,43 +94,71 @@ async function handleMessage(msg) {
 
         if (command === '/pausa') {
             isAIActive = false;
-            return whatsapp.sendMessage(from, 'â¸ï¸ Asistente IA pausado por el administrador.');
+            return whatsapp.sendMessage(from, '⏸️ Asistente IA pausado por el administrador.');
         }
         if (command === '/activa') {
             isAIActive = true;
-            return whatsapp.sendMessage(from, 'â–¶ï¸ Asistente IA reactivado.');
+            return whatsapp.sendMessage(from, '▶️ Asistente IA reactivado.');
         }
         if (command === '/resumen') {
             try {
                 const stats = await db.getStats();
-                let report = `ðŸ“Š *RESUMEN DE SOPORTE MENSUAL*\n\n`;
-                report += `âœ… Consultas resueltas: ${stats.total_queries}\n`;
+                let report = `📊 *RESUMEN DE SOPORTE MENSUAL*\n\n`;
+                report += `✅ Consultas resueltas: ${stats.total_queries}\n`;
                 report += `--------------------------\n`;
                 Object.entries(stats.categories).forEach(([name, count]) => {
                     if (count > 0) {
-                        const icon = name === 'wc' ? 'ðŸš½' : name === 'agua' ? 'ðŸ’§' : name === 'electricidad' ? 'âš¡' : 'ðŸ”§';
+                        const icon = name === 'wc' ? '🚽' : name === 'agua' ? '💧' : name === 'electricidad' ? '⚡' : '🔧';
                         report += `${icon} ${name.toUpperCase()}: ${count}\n`;
                     }
                 });
                 return whatsapp.sendMessage(from, report);
             } catch (e) {
-                return whatsapp.sendMessage(from, 'âŒ Error al generar el resumen.');
+                return whatsapp.sendMessage(from, '❌ Error al generar el resumen.');
             }
         }
         if (command === '/status') {
             const metrics = whatsapp.getMetrics();
-            const statusReport = `ðŸ¤– *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'SÃ' : 'NO'}\n- API: ${metrics.status}\n- Mensajes IN: ${metrics.totalMessagesIn}\n- Mensajes OUT: ${metrics.totalMessagesOut}\n- Errores: ${metrics.totalErrors}\n- RAM: ${metrics.memory}\n- Uptime: ${metrics.uptime}`;
+            const statusReport = `🤖 *Estado del Bot*:\n- IA Activa: ${isAIActive ? 'Sí ' : 'NO'}\n- API: ${metrics.status}\n- Mensajes IN: ${metrics.totalMessagesIn}\n- Mensajes OUT: ${metrics.totalMessagesOut}\n- Errores: ${metrics.totalErrors}\n- RAM: ${metrics.memory}\n- Uptime: ${metrics.uptime}`;
             return whatsapp.sendMessage(from, statusReport);
         }
         if (command === '/ayuda') {
-            const helpMsg = 'ðŸ› ï¸ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseÃ±a\n/resumen - EstadÃ­sticas';
+            const helpMsg = '🛠️ *Comandos Admin*:\n/status - Ver estado\n/pausa - Pausar IA\n/activa - Activar IA\n/resena [num] - Enviar link reseña\n/resumen - Estadísticas\n/feedback - Ver resumen de valoraciones';
             return whatsapp.sendMessage(from, helpMsg);
+        }
+        if (command === '/feedback') {
+            try {
+                const summary = await db.getFeedbackSummary();
+                if (summary.total === 0) {
+                    return whatsapp.sendMessage(from, '📊 Aún no hay valoraciones registradas.');
+                }
+                let report = `⭐ *RESUMEN DE VALORACIONES*\n\n`;
+                report += `📋 Total: ${summary.total} valoraciones\n`;
+                report += `📊 Media: ${summary.average}/5\n`;
+                report += `✅ Resueltos sin humano: ${summary.resolved_rate}\n`;
+                report += `\n*Distribución:*\n`;
+                for (let i = 5; i >= 1; i--) {
+                    const count = summary.distribution[i] || 0;
+                    const bar = '★'.repeat(count);
+                    report += `${i}⭐: ${bar} (${count})\n`;
+                }
+                if (summary.recent.length > 0) {
+                    report += `\n*Últimos comentarios:*\n`;
+                    summary.recent.filter(f => f.comment).slice(0, 5).forEach(f => {
+                        report += `- ${f.rating}⭐ "${f.comment}" (${new Date(f.created_at).toLocaleDateString()})\n`;
+                    });
+                }
+                return whatsapp.sendMessage(from, report);
+            } catch (e) {
+                return whatsapp.sendMessage(from, '❌ Error al generar resumen de feedback.');
+            }
         }
         if (command === '/resena') {
             const parts = body.split(' ');
             if (parts.length < 2) return whatsapp.sendMessage(from, 'Uso: /resena [numero]');
             const target = parts[1].replace(/[^0-9]/g, '');
-            const msgReview = `¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, ¿podrías dejarnos una reseña? 👉 https://g.page/r/YOUR_LINK/review`;
+            const reviewLink = process.env.REVIEW_LINK || 'https://g.page/r/YOUR_LINK/review';
+            const msgReview = `¡Hola! Gracias por confiar en nosotros. Si te ha gustado la experiencia, ¿podrías dejarnos una reseña? 👉 ${reviewLink}`;
             await whatsapp.sendMessage(target, msgReview);
             return whatsapp.sendMessage(from, '✅ Reseña enviada.');
         }
@@ -166,6 +199,57 @@ async function handleMessage(msg) {
         }
     }
 
+    // --- INTERCEPTAR FEEDBACK (antes de enviar a la IA) ---
+    if (feedbackState[from] === 'awaiting_rating') {
+        const rating = parseInt(body.trim());
+        if (rating >= 1 && rating <= 5) {
+            // Guardar la puntuación temporalmente
+            feedbackState[from] = 'awaiting_comment';
+            feedbackState[from + '_data'] = {
+                phone: from,
+                rating: rating,
+                category: lastCategory[from] || 'otros',
+                resolved_without_human: true
+            };
+
+            if (rating >= 4) {
+                const reviewLink = process.env.REVIEW_LINK || '';
+                let thankMsg = `¡Gracias! 🙌 Tu valoración de *${rating}/5* nos motiva mucho.`;
+                if (reviewLink && reviewLink !== 'https://g.page/r/YOUR_LINK/review') {
+                    thankMsg += `\n\nSi te apetece, nos encantaría que dejaras una reseña: ${reviewLink}`;
+                }
+                thankMsg += `\n\n¿Algún comentario adicional? (Escribe tu comentario o *"no"* para finalizar)`;
+                await whatsapp.sendMessage(from, thankMsg);
+            } else {
+                await whatsapp.sendMessage(from, `Gracias por tu honestidad. Tu valoración de *${rating}/5* queda registrada.\n\n¿Puedes contarme brevemente qué podríamos mejorar? (Escribe tu comentario o *"no"* para finalizar)`);
+            }
+            addLog('Feedback', `${from} valoró: ${rating}/5`, 'feedback');
+            return;
+        }
+        // Si no es un número 1-5, salimos del estado feedback y procesamos normalmente
+        feedbackState[from] = null;
+    }
+
+    if (feedbackState[from] === 'awaiting_comment') {
+        const feedbackData = feedbackState[from + '_data'];
+        const comment = body.toLowerCase().trim() === 'no' ? '' : body.trim();
+        feedbackData.comment = comment;
+
+        try {
+            await db.saveFeedback(feedbackData);
+            addLog('Feedback', `${from} comentó: "${comment || '(sin comentario)'}" | Rating: ${feedbackData.rating}/5`, 'feedback');
+        } catch (e) {
+            console.error('Error guardando feedback:', e);
+        }
+
+        // Limpiar estado de feedback
+        feedbackState[from] = null;
+        delete feedbackState[from + '_data'];
+
+        await whatsapp.sendMessage(from, '¡Registrado! Muchas gracias por tu tiempo. 😊 Si necesitas cualquier cosa durante tu viaje, aquí estaré 24h. ¡Buen viaje! 🚐');
+        return;
+    }
+
     // --- PROCESAMIENTO IA ---
     if (isAIActive) {
         try {
@@ -179,14 +263,24 @@ async function handleMessage(msg) {
             // Actualizar estadísticas
             db.incrementStat(category);
 
+            // Guardar la última categoría por usuario (para el feedback)
+            if (category && category !== 'otros' && category !== 'bienvenida') {
+                lastCategory[from] = category;
+            }
+
+            // Si la IA ha enviado un mensaje de FEEDBACK, activar el estado de espera
+            if (category === 'feedback') {
+                feedbackState[from] = 'awaiting_rating';
+            }
+
             // Marcar "problemas" en el alquiler si la duda es técnica
             try {
                 const rentals = await db.getRentals();
                 const currentRental = rentals.find(r => r.phone === from && r.status === 'active');
-                if (currentRental && category !== 'otros' && category !== 'normativa') {
+                if (currentRental && category !== 'otros' && category !== 'normativa' && category !== 'bienvenida' && category !== 'feedback') {
                     await db.updateRental(currentRental.id, { has_problems: true });
                 }
-            } catch (e) {}
+            } catch (e) { }
 
             // Actualizar historial
             userContext[from].push({ role: 'user', content: body });
@@ -199,25 +293,19 @@ async function handleMessage(msg) {
             await whatsapp.sendMessage(from, aiResponse);
             addLog('Asistente', aiResponse, 'ai');
 
-            // --- INYECCIÓN DE MULTIMEDIA MVP ---
-            const mediaCatalog = {
-                'agua': { type: 'video', url: '', caption: '🎥 Videotutorial: Gestión de Aguas' }, // Dejar URL vacía hasta que las grabes
-                'electricidad': { type: 'image', url: '', caption: '📸 Panel Eléctrico Principal' },
-                'gas': { type: 'image', url: '', caption: '📸 Compartimento de Gas' },
-                'wc': { type: 'video', url: '', caption: '🎥 Videotutorial: Uso del Poti' }
-            };
-
-            if (mediaCatalog[category] && mediaCatalog[category].url) {
+            // Send relevant image if available
+            const visualCategories = ['agua', 'gas', 'electricidad', 'calefaccion', 'nevera', 'wc', 'conexion_camping'];
+            if (visualCategories.includes(category)) {
                 try {
-                    await whatsapp.sendMediaByUrl(
-                        from, 
-                        mediaCatalog[category].type, 
-                        mediaCatalog[category].url, 
-                        mediaCatalog[category].caption
-                    );
-                    addLog('Asistente', `[Media Enviado: ${category}]`, 'ai');
-                } catch (e) {
-                    console.error("Fallo enviando multimedia adjunto:", e);
+                    const companyId = 'generic';
+                    const image = await db.getImageForCategory(category, companyId);
+                    if (image) {
+                        await whatsapp.sendMediaByUrl(from, 'image', image.image_url, image.description);
+                        addLog('Asistente', `🖼️ Imagen enviada: ${image.subcategory || category}`, 'ai');
+                    }
+                } catch (imgError) {
+                    console.error('[IMG] Error enviando imagen:', imgError.message);
+                    // Non-fatal: continue without image
                 }
             }
         } catch (error) {
@@ -409,7 +497,16 @@ app.get('/api/stats', async (req, res) => {
         const stats = await db.getStats();
         res.json(stats);
     } catch (e) {
-        res.status(500).json({ error: 'Fallo al leer estadÃ­sticas' });
+        res.status(500).json({ error: 'Fallo al leer estadísticas' });
+    }
+});
+
+app.get('/api/feedback', async (req, res) => {
+    try {
+        const summary = await db.getFeedbackSummary();
+        res.json(summary);
+    } catch (e) {
+        res.status(500).json({ error: 'Fallo al leer feedback' });
     }
 });
 
