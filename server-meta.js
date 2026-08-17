@@ -453,10 +453,28 @@ setInterval(async () => {
                     status: 'completed'
                 });
             } else {
-                console.log(`[SISTEMA] Saltando reseÃ±a para ${rental.phone} por problemas tÃ©cnicos detectados.`);
+                console.log(`[SISTEMA] Saltando reseña para ${rental.phone} por problemas técnicos detectados.`);
                 await db.updateRental(rental.id, { status: 'completed_no_review' });
             }
         }
+
+        // --- CUMPLIMIENTO RGPD / PRIVACIDAD ---
+        // Eliminar datos personales (Nombre, Teléfono) 48 horas después del fin del alquiler
+        const date2DaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const rentalsToAnonymize = rentals.filter(r => 
+            r.phone !== 'ANONIMIZADO' && r.end_date <= date2DaysAgo
+        );
+
+        for (const r of rentalsToAnonymize) {
+            console.log(`[RGPD] Anonimizando datos del alquiler ${r.id}...`);
+            await db.updateRental(r.id, {
+                client_name: 'Anónimo (RGPD)',
+                name: 'Anónimo (RGPD)',
+                phone: 'ANONIMIZADO',
+                review_link: ''
+            });
+        }
+
     } catch (e) {
         console.error('Error en tarea programada:', e);
     }
