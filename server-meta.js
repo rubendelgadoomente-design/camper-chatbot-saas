@@ -10,12 +10,73 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const { processMessageAI, transcribeAudio } = require('./llm-logic');
 const db = require('./database');
 const whatsapp = require('./whatsapp-meta');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// --- AUTENTICACIÓN Y SESIONES ---
+const DASHBOARD_USER = process.env.DASHBOARD_USER || 'admin';
+const DASHBOARD_PASSWORD = process.env.DASHBOARD_PASSWORD || 'camperbot2026';
+
+app.use(cookieParser());
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'camperbot-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: false, // Railway termina SSL en el proxy, Express ve HTTP
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    }
+}));
+
+// Páginas y rutas protegidas (requieren login)
+const PROTECTED_PAGES = ['/monitor.html', '/stats.html', '/registro.html'];
+const PROTECTED_API = ['/api/logs', '/api/stats', '/api/feedback', '/api/metrics', '/api/rentals'];
+
+// Middleware: redirigir a login si no hay sesión activa
+const requireAuth = (req, res, next) => {
+    if (req.session && req.session.authenticated) {
+        return next();
+    }
+    // Si es una petición API, devolver 401
+    if (req.path.startsWith('/api/')) {
+        return res.status(401).json({ error: 'No autenticado. Inicia sesión en /login.html' });
+    }
+    // Si es una página HTML, redirigir al login
+    return res.redirect('/login.html');
+};
+
+// Aplicar protección a las páginas del dashboard
+PROTECTED_PAGES.forEach(page => {
+    app.get(page, requireAuth, (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', page));
+    });
+});
+
+// Login endpoint
+app.post('/api/login', express.json(), (req, res) => {
+    const { username, password } = req.body;
+    if (username === DASHBOARD_USER && password === DASHBOARD_PASSWORD) {
+        req.session.authenticated = true;
+        req.session.user = username;
+        console.log(`🔑 Login exitoso: ${username}`);
+        return res.json({ success: true, redirect: '/monitor.html' });
+    }
+    console.log(`🚫 Login fallido: ${username}`);
+    return res.status(401).json({ error: 'Credenciales inválidas' });
+});
+
+// Logout endpoint
+app.get('/api/logout', (req, res) => {
+    req.session.destroy();
+    res.redirect('/login.html');
+});
 
 // --- CONFIGURACIÃ“N DE ESTADO Y LOGS ---
 let logs = [];
@@ -389,7 +450,7 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-app.post('/api/rentals', async (req, res) => {
+app.post('/api/rentals', requireAuth, async (req, res) => {
     const name = req.body.client_name || req.body.name;
     let phone = req.body.phone;
     const endDate = req.body.end_date || req.body.endDate;
@@ -480,7 +541,7 @@ setInterval(async () => {
     }
 }, 3600000);
 
-app.get('/api/logs', (req, res) => res.json(logs));
+app.get('/api/logs', requireAuth, (req, res) => res.json(logs));
 app.get('/api/is-ai-active', (req, res) => res.json({ active: isAIActive }));
 
 // --- CHAT WEB (PROBADOR AI) ---
@@ -510,7 +571,7 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', requireAuth, async (req, res) => {
     try {
         const stats = await db.getStats();
         res.json(stats);
@@ -519,7 +580,7 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
-app.get('/api/feedback', async (req, res) => {
+app.get('/api/feedback', requireAuth, async (req, res) => {
     try {
         const summary = await db.getFeedbackSummary();
         res.json(summary);
@@ -534,7 +595,7 @@ app.get('/api/health', (req, res) => {
     res.status(metrics.healthy ? 200 : 503).json(metrics);
 });
 
-app.get('/api/metrics', (req, res) => {
+app.get('/api/metrics', requireAuth, (req, res) => {
     const metrics = whatsapp.getMetrics();
     res.json({
         ...metrics,
