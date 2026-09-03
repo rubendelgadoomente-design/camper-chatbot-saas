@@ -169,7 +169,7 @@
 
                 if (res.ok) {
                     const data = await res.json();
-                    window.location.href = data.redirect || '/monitor.html';
+                    window.location.href = data.redirect || '/stats.html';
                 } else {
                     errorMsg.classList.add('show');
                 }

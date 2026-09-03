@@ -66,7 +66,7 @@ app.post('/api/login', express.json(), (req, res) => {
         req.session.authenticated = true;
         req.session.user = username;
         console.log(`🔑 Login exitoso: ${username}`);
-        return res.json({ success: true, redirect: '/monitor.html' });
+        return res.json({ success: true, redirect: '/stats.html' });
     }
     console.log(`🚫 Login fallido: ${username}`);
     return res.status(401).json({ error: 'Credenciales inválidas' });
