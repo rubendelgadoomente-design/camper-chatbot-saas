@@ -36,8 +36,8 @@ app.use(session({
 }));
 
 // Páginas y rutas protegidas (requieren login)
-const PROTECTED_PAGES = ['/monitor.html', '/stats.html', '/registro.html'];
-const PROTECTED_API = ['/api/logs', '/api/stats', '/api/feedback', '/api/metrics', '/api/rentals'];
+const PROTECTED_PAGES = ['/monitor.html', '/stats.html', '/registro.html', '/superadmin.html'];
+const PROTECTED_API = ['/api/logs', '/api/stats', '/api/feedback', '/api/metrics', '/api/rentals', '/api/superadmin'];
 
 // Middleware: redirigir a login si no hay sesión activa
 const requireAuth = (req, res, next) => {
@@ -591,6 +591,42 @@ app.get('/api/feedback', requireAuth, async (req, res) => {
         res.json(summary);
     } catch (e) {
         res.status(500).json({ error: 'Fallo al leer feedback' });
+    }
+});
+
+app.get('/api/superadmin', requireAuth, async (req, res) => {
+    try {
+        const stats = await db.getStats();
+        const rentals = await db.getRentals();
+        
+        // Calcular alquileres activos
+        const today = new Date().toISOString().split('T')[0];
+        const activeRentals = rentals.filter(r => 
+            r.end_date >= today && r.status !== 'completed' && r.status !== 'completed_no_review'
+        ).length;
+
+        // Estimar coste de la API IA ($0.002 por query aprox)
+        const totalQueries = stats.total_queries || 0;
+        const estimatedCost = (totalQueries * 0.002).toFixed(2);
+
+        res.json({
+            total_companies: 1, // En fase piloto hay 1 empresa dada de alta
+            total_active_rentals: activeRentals,
+            total_queries: totalQueries,
+            estimated_ai_cost: estimatedCost,
+            companies: [
+                {
+                    id: 'CM-01',
+                    name: process.env.COMPANY_NAME || 'Autocaravanas Costa da Morte',
+                    plan: 'Early Access (Piloto)',
+                    mrr: 49,
+                    active_rentals: activeRentals,
+                    status: 'Activa'
+                }
+            ]
+        });
+    } catch (e) {
+        res.status(500).json({ error: 'Fallo al cargar panel maestro' });
     }
 });
 

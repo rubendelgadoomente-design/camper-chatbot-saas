@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CamperBot | SuperAdmin HQ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #18181b;
+            --text: #f8fafc;
+            --subtext: #94a3b8;
+            --accent: #0ea5e9;
+            --success: #10b981;
+            --border: #27272a;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 50% 0%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); 
+        }
+
+        .title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px; }
+        .badge { background: #3b0764; color: #d8b4fe; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1px solid #7e22ce; }
+
+        .metrics-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 1.5rem; margin-bottom: 3rem; 
+        }
+
+        .metric-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+        .metric-label { color: var(--subtext); font-size: 0.85rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+        .metric-value { font-size: 2.5rem; font-weight: 700; margin: 0.5rem 0; }
+        
+        .companies-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .companies-header { padding: 1.5rem; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 1.2rem; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 1rem 1.5rem; color: var(--subtext); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        td { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        tr:last-child td { border-bottom: none; }
+        
+        .status-active { display: inline-flex; align-items: center; gap: 6px; color: var(--success); font-weight: 500; font-size: 0.85rem; background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; }
+        .status-active::before { content: ""; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+
+        .action-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: background 0.2s; }
+        .action-btn:hover { background: #3f3f46; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="title">CamperBot <span style="font-weight: 400; color: var(--subtext);">SuperAdmin</span></div>
+                <div class="badge">Master Control HQ</div>
+            </div>
+            <div>
+                <a href="/stats.html" style="color: var(--subtext); text-decoration: none; font-size: 0.9rem;">Volver a vista cliente</a>
+            </div>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Empresas B2B</div>
+                <div class="metric-value" id="val-companies">0</div>
+                <div style="color: var(--success); font-size: 0.85rem;">+1 en los últimos 7 días</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">MRR (Ingreso Mensual)</div>
+                <div class="metric-value" style="color: var(--success);" id="val-mrr">0€</div>
+                <div style="color: var(--subtext); font-size: 0.85rem;">Suscripciones Activas</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Vehículos Monitorizados</div>
+                <div class="metric-value" id="val-rentals">0</div>
+                <div style="color: var(--subtext); font-size: 0.85rem;">Flota global activa hoy</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Coste API (IA)</div>
+                <div class="metric-value" style="color: #ef4444;" id="val-cost">$0.00</div>
+                <div style="color: var(--subtext); font-size: 0.85rem;" id="val-queries">Basado en 0 consultas</div>
+            </div>
+        </div>
+
+        <div class="companies-section">
+            <div class="companies-header">Empresas Clientes (Portfolio)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Cliente</th>
+                        <th>Nombre de Empresa</th>
+                        <th>Plan B2B</th>
+                        <th>Vehículos Activos</th>
+                        <th>Ingreso (MRR)</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="companies-table-body">
+                    <tr><td colspan="7" style="text-align: center; color: var(--subtext);">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function loadSuperAdmin() {
+            try {
+                const res = await fetch('/api/superadmin');
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const data = await res.json();
+
+                document.getElementById('val-companies').innerText = data.total_companies;
+                document.getElementById('val-rentals').innerText = data.total_active_rentals;
+                document.getElementById('val-cost').innerText = '$' + data.estimated_ai_cost;
+                document.getElementById('val-queries').innerText = `Basado en ${data.total_queries} consultas`;
+
+                let totalMrr = 0;
+                let html = '';
+                
+                data.companies.forEach(company => {
+                    totalMrr += company.mrr;
+                    html += `
+                        <tr>
+                            <td style="color: var(--subtext); font-family: monospace;">${company.id}</td>
+                            <td style="font-weight: 600;">${company.name}</td>
+                            <td><span style="background: rgba(14, 165, 233, 0.1); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">${company.plan}</span></td>
+                            <td>${company.active_rentals} furgonetas</td>
+                            <td>${company.mrr}€/mes</td>
+                            <td><span class="status-active">${company.status}</span></td>
+                            <td>
+                                <button class="action-btn" onclick="alert('Funcionalidad de suspensión en Fase 2')">Bloquear</button>
+                                <button class="action-btn" style="margin-left: 5px;" onclick="window.location.href='/stats.html'">Login As</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('val-mrr').innerText = totalMrr + '€';
+                document.getElementById('companies-table-body').innerHTML = html;
+
+            } catch (error) {
+                console.error("Error cargando SuperAdmin:", error);
+                document.getElementById('companies-table-body').innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ef4444;">Error de conexión. Asegúrate de estar logueado.</td></tr>';
+            }
+        }
+
+        window.onload = loadSuperAdmin;
+    </script>
+</body>
+</html>
