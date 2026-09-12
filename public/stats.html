@@ -186,8 +186,11 @@
                 const happyUsers = (feedback.distribution && (feedback.distribution[4] || 0) + (feedback.distribution[5] || 0)) || 0;
                 document.getElementById('google-reviews').innerText = '+' + Math.floor(happyUsers * 0.8);
 
-                document.getElementById('avg-rating').innerHTML = `${feedback.average}<span style="font-size:1.5rem; color:var(--star)">★</span>`;
-                document.getElementById('total-reviews').innerText = `Basado en ${feedback.total} valoraciones`;
+                const avgRating = feedback.average ? feedback.average : '0.0';
+                const totalReviews = feedback.total ? feedback.total : 0;
+                
+                document.getElementById('avg-rating').innerHTML = `${avgRating}<span style="font-size:1.5rem; color:var(--star)">★</span>`;
+                document.getElementById('total-reviews').innerText = `Basado en ${totalReviews} valoraciones`;
 
                 const container = document.getElementById('category-bars');
                 container.innerHTML = '';
