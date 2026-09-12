@@ -246,7 +246,8 @@ async function handleMessage(msg) {
                     welcome_sent: true
                 });
 
-                const welcomeMsg = `¡Hola ${rental.client_name}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
+                const clientName = rental.client_name || rental.name || 'Viajero';
+                const welcomeMsg = `¡Hola ${clientName}! 👋 Has activado correctamente tu asistente de viaje. Soy una IA experta en tu camper y estoy aquí 24h para ayudarte. ¿Tienes alguna duda técnica ahora mismo?`;
                 return whatsapp.sendInteractiveButtons(from, welcomeMsg, [
                     { id: 'btn_agua', title: '💧 Agua / Poti' },
                     { id: 'btn_luz', title: '⚡ Luz / Nevera' },
@@ -354,21 +355,7 @@ async function handleMessage(msg) {
             await whatsapp.sendMessage(from, aiResponse);
             addLog('Asistente', aiResponse, 'ai');
 
-            // Send relevant image if available
-            const visualCategories = ['agua', 'gas', 'electricidad', 'calefaccion', 'nevera', 'wc', 'conexion_camping'];
-            if (visualCategories.includes(category)) {
-                try {
-                    const companyId = 'generic';
-                    const image = await db.getImageForCategory(category, companyId);
-                    if (image) {
-                        await whatsapp.sendMediaByUrl(from, 'image', image.image_url, image.description);
-                        addLog('Asistente', `🖼️ Imagen enviada: ${image.subcategory || category}`, 'ai');
-                    }
-                } catch (imgError) {
-                    console.error('[IMG] Error enviando imagen:', imgError.message);
-                    // Non-fatal: continue without image
-                }
-            }
+            // Imagen sending disabled to avoid auto-spamming images when just asking for details
         } catch (error) {
             console.error('Error IA:', error);
         }
@@ -574,7 +561,25 @@ app.post('/api/chat', async (req, res) => {
 app.get('/api/stats', requireAuth, async (req, res) => {
     try {
         const stats = await db.getStats();
-        res.json(stats);
+        // Calcular vehículos activos en ruta y mapear sus datos
+        const rentals = await db.getRentals();
+        const today = new Date().toISOString().split('T')[0];
+        
+        const activeRentalsList = rentals.filter(r => 
+            r.end_date >= today && 
+            r.status !== 'completed' && 
+            r.status !== 'completed_no_review'
+        ).map(r => ({
+            client_name: r.client_name || r.name || 'Viajero',
+            end_date: r.end_date,
+            has_problems: r.has_problems || false
+        })).sort((a, b) => new Date(a.end_date) - new Date(b.end_date)); // Ordenar por fecha más próxima
+        
+        res.json({ 
+            ...stats, 
+            active_rentals: activeRentalsList.length,
+            active_rentals_list: activeRentalsList
+        });
     } catch (e) {
         res.status(500).json({ error: 'Fallo al leer estadísticas' });
     }

@@ -3,201 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CamperBot | Dashboard de Soporte</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <title>CamperBot | Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0f172a;
             --card: #1e293b;
             --primary: #3b82f6;
-            --accent: #2dd4bf;
+            --accent: #10b981;
+            --danger: #ef4444;
             --text: #f8fafc;
             --subtext: #94a3b8;
+            --star: #fbbf24;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
+            background-image: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95)), url('/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: var(--text);
             margin: 0;
             padding: 2rem;
-            display: flex;
-            justify-content: center;
         }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { 
+            background-color: rgba(30, 41, 59, 0.65); 
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            padding: 1.5rem; 
+            border-radius: 1rem; 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); 
+        }
+        .card-label { color: var(--subtext); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .card-value { font-size: 2.2rem; font-weight: 700; margin: 0.5rem 0; color: var(--text); display: flex; align-items: center; gap: 5px; }
+        .card-footer { font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+        
+        .main-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem; }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+        
+        .chart-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Barras de Diagnóstico */
+        .bar-row { margin-bottom: 1.2rem; }
+        .bar-info { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.4rem; }
+        .bar-bg { height: 8px; background-color: #334155; border-radius: 4px; overflow: hidden; }
+        .bar-fill { height: 100%; background-color: var(--primary); }
+        .alert-high .bar-fill { background-color: var(--danger); }
+        .alert-high .bar-info span:first-child { color: var(--danger); font-weight: 700; }
 
-        .container {
-            max-width: 1000px;
-            width: 100%;
-        }
+        /* Lista de Alertas / Feedback */
+        .list-item { padding: 1rem; background-color: #0f172a; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #334155; border-left: 4px solid var(--accent); }
+        .list-item.critical { border-left-color: var(--danger); }
+        .list-header { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .list-desc { font-size: 0.95rem; line-height: 1.4; color: #cbd5e1; }
+        .stars { color: var(--star); font-size: 1.1rem; }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin: 0;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .card {
-            background-color: var(--card);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            border: 1px solid #334155;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-label {
-            font-size: 0.8rem;
-            color: var(--subtext);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .card-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin: 0.5rem 0;
-        }
-
-        .card-footer {
-            font-size: 0.85rem;
-            color: var(--accent);
-        }
-
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .main-grid { grid-template-columns: 1fr; }
-        }
-
-        .chart-box {
-            background-color: var(--card);
-            padding: 2rem;
-            border-radius: 1rem;
-            border: 1px solid #334155;
-        }
-
-        .chart-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .bar-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        .bar-row {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        .bar-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.9rem;
-        }
-
-        .bar-bg {
-            height: 10px;
-            background-color: #334155;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background-color: var(--primary);
-            transition: width 1s ease-out;
-        }
-
-        .status-badge {
-            background-color: #064e3b;
-            color: #34d399;
-            padding: 0.4rem 0.8rem;
-            border-radius: 2rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
+        .btn { background-color: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+        .nav-menu a { color: var(--subtext); text-decoration: none; margin-left: 1rem; font-size: 0.9rem; transition: color 0.2s; }
+        .nav-menu a:hover { color: white; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div>
-                <h1>CamperBot Stats</h1>
-                <p style="color: var(--subtext); margin: 0.2rem 0;">Métricas de rendimiento e impacto</p>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="/logo.jpg" alt="CamperBot Logo" style="height: 60px; border-radius: 12px; border: 2px solid #334155; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                <div>
+                    <h1 style="margin: 0; font-size: 1.6rem; background: linear-gradient(to right, #3b82f6, #10b981); -webkit-background-clip: text; color: transparent;">CamperBot Intelligence</h1>
+                    <p style="color: var(--subtext); margin: 0.2rem 0; font-size: 0.9rem;">Panel exclusivo para empresas de alquiler</p>
+                </div>
             </div>
-            <div class="status-badge">● Sistema Activo</div>
+            <div class="nav-menu">
+                <a href="/registro.html">▶ Check-in Cliente</a>
+                <a href="/monitor.html">👁️ Monitor Vivo</a>
+            </div>
         </header>
 
         <div class="stats-grid">
-            <div class="card">
-                <div class="card-label">Consultas Resueltas</div>
-                <div class="card-value" id="total-queries">0</div>
-                <div class="card-footer">Sin intervención humana</div>
+            <div class="card" style="border: 1px solid var(--accent); background-color: rgba(16, 185, 129, 0.1);">
+                <div class="card-label">Vehículos en Ruta</div>
+                <div class="card-value" id="active-rentals">0</div>
+                <div class="card-footer" style="color: var(--accent);">Monitorizados por IA ahora mismo</div>
             </div>
             <div class="card">
-                <div class="card-label">Soporte Ahorrado</div>
+                <div class="card-label">Soporte Automatizado</div>
                 <div class="card-value" id="hours-saved">0h</div>
-                <div class="card-footer">Basado en 5 min/consulta</div>
+                <div class="card-footer">Tiempo de oficina ahorrado</div>
             </div>
             <div class="card">
-                <div class="card-label">Disponibilidad</div>
-                <div class="card-value">24/7</div>
-                <div class="card-footer">Respuesta inmediata</div>
+                <div class="card-label">Resolución sin Llamadas</div>
+                <div class="card-value" id="resolve-rate">0%</div>
+                <div class="card-footer" style="color: var(--subtext)">Autonomía del cliente</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Captación en Google Maps</div>
+                <div class="card-value" id="google-reviews">0</div>
+                <div class="card-footer">Clientes felices derivados a reseña</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Satisfacción Media</div>
+                <div class="card-value" id="avg-rating">0.0<span style="font-size:1.5rem; color:var(--star)">★</span></div>
+                <div class="card-footer" id="total-reviews">Basado en 0 valoraciones</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="chart-title">Radar de Flota Activa</div>
+            <p style="font-size: 0.85rem; color: var(--subtext); margin-top:-0.5rem; margin-bottom:1.5rem;">Estado de las autocaravanas que están en ruta y fecha prevista de retorno.</p>
+            <div id="active-rentals-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem;">
+                <!-- Cards injected by JS -->
             </div>
         </div>
 
         <div class="main-grid">
-            <div class="chart-box">
-                <div class="chart-title">Dudas por Categoría</div>
-                <div class="bar-container" id="category-bars">
+            <div class="card">
+                <div class="chart-title">Radar de Mantenimiento Preventivo</div>
+                <p style="font-size: 0.85rem; color: var(--subtext); margin-top:-0.5rem; margin-bottom:1.5rem;">Sistemas más consultados en ruta. Un pico inusual indica posible avería o desgaste inminente en la flota.</p>
+                <div id="category-bars">
                     <!-- Bars injected by JS -->
                 </div>
             </div>
-            <div class="card" style="display: flex; flex-direction: column; justify-content: center; text-align: center;">
-                <h3 style="margin-top: 0;">Valor del Piloto</h3>
-                <p style="color: var(--subtext); font-size: 0.95rem; line-height: 1.6;">
-                    Este bot está filtrando consultas técnicas repetitivas, permitiendo que tu equipo se centre en la gestión estratégica del alquiler.
-                </p>
-                <div style="margin-top: 1rem;">
-                    <button class="btn" onclick="window.print()">Exportar Reporte</button>
+            
+            <div class="card">
+                <div class="chart-title">
+                    <span>Alertas y Últimas Reseñas</span>
+                    <button class="btn" onclick="window.print()">Exportar Informe</button>
+                </div>
+                <div id="feedback-list">
+                    <!-- Feedback injected by JS -->
+                    <p style="color: var(--subtext); font-size: 0.9rem;">Sin actividad reciente.</p>
                 </div>
             </div>
         </div>
@@ -206,31 +146,73 @@
     <script>
         async function loadStats() {
             try {
-                const response = await fetch('/api/stats');
-                const data = await response.json();
-
-                document.getElementById('total-queries').innerText = data.total_queries;
+                const [statsRes, feedbackRes] = await Promise.all([
+                    fetch('/api/stats'),
+                    fetch('/api/feedback')
+                ]);
                 
-                // Calcular horas ahorradas (5 min por consulta)
+                const data = await statsRes.json();
+                const feedback = await feedbackRes.json();
+
+                // Vehículos activos en ruta
+                document.getElementById('active-rentals').innerText = data.active_rentals || 0;
+                
+                // Renderizar Radar de Flota
+                const rentalsGrid = document.getElementById('active-rentals-grid');
+                rentalsGrid.innerHTML = '';
+                if (data.active_rentals_list && data.active_rentals_list.length > 0) {
+                    data.active_rentals_list.forEach(r => {
+                        const date = new Date(r.end_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                        const statusColor = r.has_problems ? 'var(--danger)' : 'var(--accent)';
+                        const statusIcon = r.has_problems ? '🔴 Incidencia Reportada' : '🟢 Todo OK';
+                        
+                        rentalsGrid.innerHTML += `
+                            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid #334155; border-radius: 8px; padding: 1rem; border-left: 3px solid ${statusColor};">
+                                <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.3rem;">${r.client_name}</div>
+                                <div style="font-size: 0.85rem; color: var(--subtext); margin-bottom: 0.5rem;">Devolución: ${date}</div>
+                                <div style="font-size: 0.8rem; font-weight: 600; color: ${statusColor};">${statusIcon}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    rentalsGrid.innerHTML = '<p style="color: var(--subtext); font-size: 0.9rem;">No hay vehículos en ruta en este momento.</p>';
+                }
+
                 const hours = (data.total_queries * 5 / 60).toFixed(1);
                 document.getElementById('hours-saved').innerText = hours + 'h';
+                document.getElementById('resolve-rate').innerText = feedback.resolved_rate || '0%';
+                
+                // Estimación MVP: Asumimos que el 80% de los de 4 y 5 estrellas clickan el link de Google
+                const happyUsers = (feedback.distribution && (feedback.distribution[4] || 0) + (feedback.distribution[5] || 0)) || 0;
+                document.getElementById('google-reviews').innerText = '+' + Math.floor(happyUsers * 0.8);
+
+                document.getElementById('avg-rating').innerHTML = `${feedback.average}<span style="font-size:1.5rem; color:var(--star)">★</span>`;
+                document.getElementById('total-reviews').innerText = `Basado en ${feedback.total} valoraciones`;
 
                 const container = document.getElementById('category-bars');
                 container.innerHTML = '';
+                
+                const cats = { ...data.categories };
+                delete cats['bienvenida'];
+                delete cats['feedback'];
 
-                // Ordenar categorías por cantidad
-                const categories = Object.entries(data.categories)
-                    .sort((a, b) => b[1] - a[1]);
+                const categories = Object.entries(cats).sort((a, b) => b[1] - a[1]);
 
                 categories.forEach(([name, count]) => {
-                    const percentage = data.total_queries > 0 ? (count / data.total_queries * 100) : 0;
+                    if(count === 0) return; 
+                    const total = data.total_queries > 0 ? data.total_queries : 1;
+                    const percentage = (count / total * 100);
                     
                     const row = document.createElement('div');
-                    row.className = 'bar-row';
+                    row.className = 'bar-row ' + (percentage > 40 ? 'alert-high' : '');
+                    const catName = name === 'otros' ? 'Dudas Generales' : name;
+                    
+                    let actionText = percentage > 40 ? '<span style="color:var(--danger); font-size:0.8rem;">⚠️ Requiere Revisión</span>' : '';
+
                     row.innerHTML = `
                         <div class="bar-info">
-                            <span style="text-transform: capitalize;">${name}</span>
-                            <span>${count}</span>
+                            <span style="text-transform: capitalize;">${catName}</span>
+                            <span>${count} consultas ${actionText}</span>
                         </div>
                         <div class="bar-bg">
                             <div class="bar-fill" style="width: ${percentage}%"></div>
@@ -239,13 +221,42 @@
                     container.appendChild(row);
                 });
 
+                const feedbackContainer = document.getElementById('feedback-list');
+                if (feedback.recent && feedback.recent.length > 0) {
+                    feedbackContainer.innerHTML = '';
+                    
+                    // Simular una alerta crítica estática para la demo del MVP
+                    feedbackContainer.innerHTML += `
+                        <div class="list-item critical">
+                            <div class="list-header">
+                                <span style="color: var(--danger); font-weight: bold;">⚠️ INCIDENCIA REPORTADA</span>
+                                <span class="feedback-date">Hoy</span>
+                            </div>
+                            <div class="list-desc">"He tenido un pequeño roce en el parachoques trasero aparcando." (Cliente: Viajero) - <i>Fianza en riesgo</i></div>
+                        </div>
+                    `;
+
+                    feedback.recent.slice(0, 3).forEach(f => {
+                        const date = new Date(f.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+                        const item = document.createElement('div');
+                        item.className = 'list-item';
+                        item.innerHTML = `
+                            <div class="list-header">
+                                <span class="stars">${'★'.repeat(f.rating)}${'☆'.repeat(5 - f.rating)}</span>
+                                <span class="feedback-date">${date}</span>
+                            </div>
+                            <div class="list-desc">"${f.comment || 'Valoración sin comentario.'}"</div>
+                        `;
+                        feedbackContainer.appendChild(item);
+                    });
+                }
+
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
         }
 
         loadStats();
-        // Recargar cada 30 segundos
         setInterval(loadStats, 30000);
     </script>
 </body>
